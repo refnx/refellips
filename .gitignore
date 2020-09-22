@@ -1,0 +1,11 @@
+*.pyc
+.idea
+.DS_Store
+*.o
+*.so
+.eggs
+*.icns
+.tox
+__pycache__
+.ipynb_checkpoints/
+.cache/
