@@ -222,7 +222,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     AOI = AOI*(np.pi/180)
 
     RIs        = layers[:, 1] + layers[:, 2]*1j
-    thicks     = layers[:, 0]
+    thicks     = layers[:, 0]/10 #Ang to nm
     thicks[0]  = np.inf
     thicks[-1] = np.inf
     
