@@ -1,4 +1,4 @@
-Angle of Incidence (°),Psi (°),Delta (°)
+Angle of Incidence,Psi,Delta
 55,27.84,167.47
 60,23.521,162.72
 65,18.345,154.57

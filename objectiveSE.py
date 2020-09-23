@@ -105,6 +105,7 @@ class ObjectiveSE(BaseObjective):
         if name is None:
             self.name = id(self)
 
+
     def __str__(self):
         s = ["{:_>80}".format("")]
         s.append("Objective - {0}".format(self.name))

@@ -29,9 +29,11 @@ class ReflectModelSE(object):
         self,
         structure,
         wavelength,
+        delta_offset = 0,
         name=None,
     ):
         self.name = name
+        self.DeltaOffset = delta_offset
         self._parameters = None
 
         # to make it more like a refnx.analysis.Model
@@ -42,6 +44,8 @@ class ReflectModelSE(object):
 
         self._structure = None
         self.structure = structure
+
+        self.DeltaOffset = possibly_create_parameter(delta_offset, name='delta offset')
 
         # THIS IS REALLY QUENSTIONABLE
         for x in self._structure:
@@ -73,7 +77,8 @@ class ReflectModelSE(object):
     def __repr__(self):
         return (
             f"ReflectModel({self._structure!r}, name={self.name!r},"
-            f" wavelength={self.wav!r}"
+            f" wavelength={self.wav!r},"
+            f" delta_offset = {self.delOffset!r} "
         )
 
     @property
@@ -88,6 +93,19 @@ class ReflectModelSE(object):
     @wav.setter
     def wav(self, value):
         self._wav.value = value
+
+    @property
+    def delOffset(self):
+        """
+        :class:`refnx.analysis.Parameter` - the calculated delta offset specific 
+        to the ellipsometer and experimental setup used.
+
+        """
+        return self.DeltaOffset
+
+    @delOffset.setter
+    def delOffset(self, value):
+        self.DeltaOffset.value = value
 
 
     def model(self, aoi, p=None):
@@ -113,7 +131,8 @@ class ReflectModelSE(object):
         return Delta_Psi_TMM(
             AOI=aoi,
             layers=self.structure.slabs()[..., :4],
-            wavelength=self.wav.value
+            wavelength=self.wav.value,
+            delta_offset=self.delOffset.value
         )
 
     def logp(self):
@@ -143,7 +162,7 @@ class ReflectModelSE(object):
     def structure(self, structure):
         self._structure = structure
         p = Parameters(name="instrument parameters")
-        p.extend([self.wav])
+        p.extend([self.wav, self.delOffset])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
@@ -159,7 +178,7 @@ class ReflectModelSE(object):
         return self._parameters
     
     
-def Delta_Psi_TMM(AOI, layers, wavelength):
+def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     """
     Get delta and psi using the transfer matrix method.
     
@@ -219,4 +238,4 @@ def Delta_Psi_TMM(AOI, layers, wavelength):
     
         psi[idx]    = np.arctan(abs(rp/rs))
         delta[idx]  = np.angle(1/(-rp/rs))+np.pi
-    return psi*(180/np.pi), delta*(180/np.pi)
+    return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
