@@ -53,14 +53,14 @@ class DataSE(object):
         The data, (x, y, y_err, x_err)
     finite_data : tuple of np.ndarray
         Data points that are finite
-    x : np.ndarray
-        x data (possibly masked)
-    y : np.ndarray
-        y data (possibly masked)
-    y_err : np.ndarray
-        uncertainties on the y data (possibly masked)
-    x_err : np.ndarray
-        uncertainties on the x data (possibly masked)
+    wav : np.ndarray
+        wavelength
+    AOI : np.ndarray
+        angle of incidence
+    psi : np.ndarray
+        psi
+    delta : np.ndarray
+        delta
     mask : np.ndarray
         mask
     filename : str or None
@@ -96,15 +96,6 @@ class DataSE(object):
             self._aoi = data._aoi
             self._psi = data._psi
             self._delta = data._delta
-        # elif data is not None:
-        #     self._x = np.array(data[0], dtype=float)
-        #     self._y = np.array(data[1], dtype=float)
-        #     if len(data) > 2:
-        #         self._y_err = np.array(data[2], dtype=float)
-        #         self.weighted = True
-
-        #     if len(data) > 3:
-        #         self._x_err = np.array(data[3], dtype=float)
 
         self.mask = np.ones_like(self._wav, dtype=bool)
 
@@ -125,6 +116,33 @@ class DataSE(object):
             return "Data1D(data={filename!r}," " mask={msk!r})".format(**d)
         else:
             return "Data1D(data={data!r}," " mask={msk!r})".format(**d)
+
+    def __iter__(self):
+        self._current_wav_idx = 0
+        self._current_wav = self._unique_wavs[self._current_wav_idx]
+        return self
+
+    def __next__(self):
+        if self._current_wav_idx < len(self._unique_wavs):
+            self._current_wav = self._unique_wavs[self._current_wav_idx]
+            self.mask = self._wav == self._current_wav
+            self._current_wav_idx += 1
+            return self
+        else:
+            raise StopIteration
+
+    @property
+    def _unique_wavs(self):
+        """
+        List of wavelengths in dataset.
+
+        Returns
+        -------
+        np.array
+            contains wavelengths used by dataset
+
+        """
+        return np.unique(self.wav)
 
     @property
     def wav(self):
@@ -160,7 +178,7 @@ class DataSE(object):
 
     @property
     def data(self):
-        """4-tuple containing the (x, y, y_err, x_err) data."""
+        """4-tuple containing the (lambda, AOI, delta, psi) data."""
         return self.wav, self.aoi, self.delta, self.psi
 
 
@@ -186,6 +204,8 @@ class DataSE(object):
         self._delta = np.array(data_tuple[3], dtype=float)
 
         self.mask = np.ones_like(self._wav, dtype=bool)
+        
+    
 
     def save(self, f):
         """

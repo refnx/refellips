@@ -88,7 +88,7 @@ class ObjectiveSE(BaseObjective):
     ):
         self.model = model
         # should be a DataSE instance
-        if isinstance(data, DataSE):
+        if type(data) is DataSE:
             self.data = data
         else:
             print('bad')
@@ -155,6 +155,7 @@ class ObjectiveSE(BaseObjective):
         """
         return self.data.y.size
 
+
     def varying_parameters(self):
         """
         Returns
@@ -202,13 +203,16 @@ class ObjectiveSE(BaseObjective):
             Residuals, `(data.y - model) / y_err`.
 
         """
+        # COULD BE VERY BROKEN
         self.setp(pvals)
+        res = 0
+        for data in self.data:
+            self.model.wav = data._current_wav
 
-        psi, delta = self.model(self.data.aoi)
-        # TODO add in varying parameter residuals? (z-scores...)
+            psi, delta = self.model(self.data.aoi)
+            res += np.squeeze(self.data.psi - psi + self.data.delta - delta)
 
-
-        return np.squeeze(self.data.psi - psi + self.data.delta - delta)
+        return res
 
     def chisqr(self, pvals=None):
         """
