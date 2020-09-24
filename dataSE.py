@@ -72,10 +72,11 @@ class DataSE(object):
 
     """
 
-    def __init__(self, data=None, **kwds):
+    def __init__(self, data=None, delimiter='\t', **kwds):
         self.filename = None
         self.name = None
 
+        self.delimiter = delimiter
         self.metadata = kwds
         self._wav = np.zeros(0)
         self._aoi = np.zeros(0)
@@ -142,7 +143,7 @@ class DataSE(object):
             contains wavelengths used by dataset
 
         """
-        return np.unique(self.wav)
+        return np.unique(self._wav)
 
     @property
     def wav(self):
@@ -204,8 +205,7 @@ class DataSE(object):
         self._delta = np.array(data_tuple[3], dtype=float)
 
         self.mask = np.ones_like(self._wav, dtype=bool)
-        
-    
+
 
     def save(self, f):
         """
@@ -226,7 +226,7 @@ class DataSE(object):
     def load(self, f):
         """
         Load a dataset from file. Must be 4 column ASCII.
-        
+
         wavelength, AOI, Psi, Delta
 
         Parameters
@@ -241,12 +241,13 @@ class DataSE(object):
         with open(f, 'r') as text:
             for i in range(100): # check the first 100 lines
                 try:
-                    float(text.readline().split('\t')[0])
+                    float(text.readline().split(self.delimiter)[0])
                     break
                 except ValueError:
                     skip_lines += 1
 
-        self._wav, self._aoi, self._psi, self._delta = np.loadtxt(f, skiprows=skip_lines).T
+        self._wav, self._aoi, self._psi, self._delta = np.loadtxt(f, skiprows=skip_lines,
+                                                                  delimiter=self.delimiter).T
 
 
     def refresh(self):

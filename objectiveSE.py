@@ -205,14 +205,15 @@ class ObjectiveSE(BaseObjective):
         """
         # COULD BE VERY BROKEN
         self.setp(pvals)
-        res = 0
+        res = []
         for data in self.data:
             self.model.wav = data._current_wav
 
             psi, delta = self.model(self.data.aoi)
-            res += np.squeeze(self.data.psi - psi + self.data.delta - delta)
+            res.append(self.data.psi - psi)
+            res.append(self.data.delta - delta)
 
-        return res
+        return np.reshape(res, (-1))
 
     def chisqr(self, pvals=None):
         """
