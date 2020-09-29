@@ -11,10 +11,10 @@ import os.path
 import re
 
 import numpy as np
+import pandas as pd
 from scipy._lib._util import check_random_state
 from refnx.util.nsplice import get_scaling_in_overlap
 from refnx._lib import possibly_open_file
-
 
 class DataSE(object):
     r"""
@@ -72,7 +72,7 @@ class DataSE(object):
 
     """
 
-    def __init__(self, data=None, delimiter='\t', **kwds):
+    def __init__(self, data=None, name=None, delimiter='\t', **kwds):
         self.filename = None
         self.name = None
 
@@ -83,12 +83,15 @@ class DataSE(object):
         self._psi = np.zeros(0)
         self._delta = np.zeros(0)
         self.weighted = False
+        self.name = name
 
 
         # if it's a file then open and load the file.
         if hasattr(data, "read") or type(data) is str:
             self.load(data)
             self.filename = data
+            
+        # if it's a already a DataSE object then just use that.
         elif isinstance(data, DataSE):
             self.name = data.name
             self.filename = data.filename
@@ -97,6 +100,13 @@ class DataSE(object):
             self._aoi = data._aoi
             self._psi = data._psi
             self._delta = data._delta
+            
+        # If its a list or tuple then assume its in format wavelength, AOI, psi, delta.
+        elif isinstance(data, list) or isinstance(data, tuple):
+            self._wav = data[0]
+            self._aoi = data[1]
+            self._psi = data[2]
+            self._delta = data[3]
 
         self.mask = np.ones_like(self._wav, dtype=bool)
 
@@ -258,3 +268,98 @@ class DataSE(object):
         if self.filename is not None:
             with open(self.filename) as f:
                 self.load(f)
+                
+                
+                
+def open_EP4file(fname):
+    df = pd.read_csv(fname,sep='\t',skiprows=[1])
+    df = df.dropna(0,how='any')   
+
+    try:
+        df['Time']
+        time_data = True
+    except KeyError:
+        time_data = False
+        print ('No time data.')
+
+    if time_data and len(df['Time'].drop_duplicates()) > 1:
+        print ('Treating as time series:')
+        output = []
+        for t in df['Time'].drop_duplicates():
+            tdf = df[df['Time']== t]
+            output += _loadEP4(tdf) # not sure if this will work
+            for op in output:
+                op['time'] = t
+    else:
+        output = _loadEP4(df)
+        for op in output:
+            op['time'] = None
+
+    datasets = []
+    for op in output:
+        data = [op['lambda'], op['aoi'], op['psi'], op['delta']]
+        del op['lambda']
+        del op['aoi']
+        del op['psi']
+        del op['delta']
+        name = _make_EP4dname(fname, op)
+        datasets.append(DataSE(data, name=name, **op))
+
+    if len(datasets) == 1:
+        return datasets[0]
+    else:
+        return datasets
+
+
+def _make_EP4dname (name, metadata):
+    base = name[:-len('_20200929-083122.ds.dat')]
+    if metadata['X pos'] is not None:
+        base += f"_x={metadata['X pos']}mm_y={metadata['Y pos']}mm"
+    if metadata['time'] is not None:
+        base += f"_t={metadata['time']}s"
+        
+    return base
+
+
+def _loadEP4(df):
+    """
+    Dataframe should have colums ['#Lambda','AOI','Psi','Delta']. Optionally
+    can have columns [X_pos, Y_pos]
+    """
+    try:
+        df['X_pos']
+        df['Y_pos']
+        loc_data = True
+    except KeyError:
+        loc_data = False
+    
+    if loc_data and (len(df['X_pos'].drop_duplicates()) > 1 or len(df['Y_pos'].drop_duplicates())>1):
+        print ('Treating as multiple locations')
+        df = df[['#Lambda', 'AOI','Psi','Delta','X_pos', 'Y_pos']]
+        df = df.round({'X_pos': 1, 'Y_pos': 1})
+
+        output = []
+        for x in df['X_pos'].drop_duplicates():
+            for y in df['Y_pos'].drop_duplicates():
+                pdf = df[np.logical_and(df['X_pos'] == x, df['Y_pos'] == y)]
+                pdf = pdf[['#Lambda','AOI','Psi','Delta']]
+                if len(pdf.index) > 0 :
+                    ave_pos = pdf.groupby(['AOI', '#Lambda']).mean()
+                    ave_pos = ave_pos.reset_index()
+                    summary = {'lambda':np.array(ave_pos['#Lambda']), 'aoi':np.array(ave_pos['AOI']),
+                               'psi':np.array(ave_pos['Psi']), 'delta':np.array(ave_pos['Delta']),
+                               'X pos':x, 'Y pos':y}
+                    output.append(summary)
+    else:
+        print ('Treating as single location')
+        df = df[['#Lambda','AOI','Psi','Delta']]
+        ave_pos = df.groupby(['AOI', '#Lambda']).mean()
+        ave_pos = ave_pos.reset_index()
+
+        summary = {'lambda':np.array(ave_pos['#Lambda']), 'aoi':np.array(ave_pos['AOI']),
+                   'psi':np.array(ave_pos['Psi']), 'delta':np.array(ave_pos['Delta']),
+                   'X pos':None, 'Y pos':None}
+        output = [summary]
+        
+    return output
+    
