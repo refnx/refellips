@@ -257,7 +257,8 @@ class DataSE(object):
                     skip_lines += 1
 
         self._wav, self._aoi, self._psi, self._delta = np.loadtxt(f, skiprows=skip_lines,
-                                                                  delimiter=self.delimiter).T
+                                                                  delimiter=self.delimiter,
+                                                                  encoding='utf8').T
 
 
     def refresh(self):

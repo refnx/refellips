@@ -64,11 +64,11 @@ class RI(Scatterer):
             if type(value) is str:
                 try:
                     self._wav, self._RI, self._EC = np.loadtxt(value, skiprows=1,
-                                                               delimiter=',').T
+                                                               delimiter=',', encoding='utf8').T
                 except ValueError:
                     self._wav, self._RI = np.loadtxt(value, skiprows=1,
                                                      delimiter=',',
-                                                     usecols=[0, 1]).T
+                                                     usecols=[0, 1], encoding='utf8').T
                     self._EC = np.zeros_like(self._wav)
             elif len(value) == 2:
                 self._RI, self._EC = value
