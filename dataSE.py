@@ -257,7 +257,8 @@ class DataSE(object):
                     skip_lines += 1
 
         self._wav, self._aoi, self._psi, self._delta = np.loadtxt(f, skiprows=skip_lines,
-                                                                  delimiter=self.delimiter).T
+                                                                  delimiter=self.delimiter,
+                                                                  encoding='utf8').T
 
 
     def refresh(self):
@@ -320,6 +321,9 @@ def _make_EP4dname (name, metadata):
         
     return base
 
+def custom_round(x, base=0.25):
+    x = np.array(x, dtype=float)
+    return np.round((base * np.round(x/base)),2)
 
 def _loadEP4(df):
     """
@@ -336,7 +340,8 @@ def _loadEP4(df):
     if loc_data and (len(df['X_pos'].drop_duplicates()) > 1 or len(df['Y_pos'].drop_duplicates())>1):
         print ('Treating as multiple locations')
         df = df[['#Lambda', 'AOI','Psi','Delta','X_pos', 'Y_pos']]
-        df = df.round({'X_pos': 1, 'Y_pos': 1})
+        df.loc[:,'X_pos'] = custom_round(df['X_pos'], base=0.25)
+        df.loc[:,'Y_pos'] = custom_round(df['Y_pos'], base=0.25)
 
         output = []
         for x in df['X_pos'].drop_duplicates():
