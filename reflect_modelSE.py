@@ -30,29 +30,36 @@ class ReflectModelSE(object):
         structure,
         wavelength,
         delta_offset = 0,
+        volume_frac = 0,
         name=None,
     ):
         self.name = name
-        self.DeltaOffset = delta_offset
-        self._parameters = None
+
+        # self.DeltaOffset = delta_offset
+        # # self._parameters = None
+
+        # self.VolumeFraction = volume_frac
+        # # self._parameters = None
 
         # to make it more like a refnx.analysis.Model
         self.fitfunc = None
 
-        # all reflectometry models need a scale factor and background
+        # all models need a wavelength
         self._wav = possibly_create_parameter(wavelength, name="wavelength")
+
+        self._DeltaOffset = possibly_create_parameter(delta_offset, name='delta offset')
+
+        self._VolumeFraction = possibly_create_parameter(volume_frac, name='volume fraction')
 
         self._structure = None
         self.structure = structure
-
-        self.DeltaOffset = possibly_create_parameter(delta_offset, name='delta offset')
 
         # THIS IS REALLY QUENSTIONABLE
         for x in self._structure:
             try:
                 x.sld.model = self
             except AttributeError:
-                print ("it appears you are using SLD's instead of RIs")
+                print ("It appears you are using SLD's instead of RIs")
 
     def __call__(self, aoi, p=None):
         r"""
@@ -78,7 +85,8 @@ class ReflectModelSE(object):
         return (
             f"ReflectModel({self._structure!r}, name={self.name!r},"
             f" wavelength={self.wav!r},"
-            f" delta_offset = {self.delOffset!r} "
+            f" delta_offset = {self.delOffset!r},"
+            f" volume_frac = {self.VolumeFrac!r} "
         )
 
     @property
@@ -101,11 +109,25 @@ class ReflectModelSE(object):
         to the ellipsometer and experimental setup used.
 
         """
-        return self.DeltaOffset
+        return self._DeltaOffset
 
     @delOffset.setter
     def delOffset(self, value):
-        self.DeltaOffset.value = value
+        self._DeltaOffset.value = value
+
+
+    @property
+    def VolumeFrac(self):
+        """
+        :class:`refnx.analysis.Parameter` - the calculated volume fraction of polymer in 
+        solution, required for EMA approximation.
+
+        """
+        return self._VolumeFraction
+
+    @VolumeFrac.setter
+    def VolumeFrac(self, value):
+        self._VolumeFraction.value = value
 
 
     def model(self, aoi, p=None):
@@ -132,7 +154,8 @@ class ReflectModelSE(object):
             AOI=aoi,
             layers=self.structure.slabs()[..., :4],
             wavelength=self.wav.value,
-            delta_offset=self.delOffset.value
+            delta_offset=self.delOffset.value,
+            volume_frac = self.VolumeFrac.value
         )
 
     def logp(self):
@@ -162,7 +185,7 @@ class ReflectModelSE(object):
     def structure(self, structure):
         self._structure = structure
         p = Parameters(name="instrument parameters")
-        p.extend([self.wav, self.delOffset])
+        p.extend([self.wav, self.delOffset, self.VolumeFrac])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
@@ -176,9 +199,30 @@ class ReflectModelSE(object):
         """
         self.structure = self._structure
         return self._parameters
+
     
+def EMA(a, b, vf):
+        """
+        The effective medium approximation to estimate the refractice 
+        index of the polymer layer in solution.
+
+        Parameters
+        ----------
+        a: the refractive index of the fronting (e.g. water)
+        b: the refractive index of the polymer (e.g. PNIPAM)
+        vf: the volume fraction of polymer in solution
+
+        Returns
+        -------
+        Refractive index of polymer layer
+
+
+        """
+        
+        return a**2 * (2*vf*(a**2 - b**2) - b**2 - 2*a**2)/(vf*(b**2 - a**2) - b**2 - 2*a**2)
+
     
-def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
+def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, volume_frac):
     """
     Get delta and psi using the transfer matrix method.
     
@@ -227,15 +271,18 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     thicks[-1] = np.inf
     
     psi   = np.zeros_like(AOI)
-    delta = np.zeros_like(AOI)
-    
+    delta = np.zeros_like(AOI)    
+
+    if volume_frac != 0:
+        RIs[1] = EMA(RIs[0], RIs[1], vf=volume_frac)
 
     for idx, aoi in enumerate(AOI):
-        s_data = coh_tmm('s', n_list=RIs, d_list=thicks, th_0=aoi, lam_vac=wavelength)
-        p_data = coh_tmm('p', n_list=RIs, d_list=thicks, th_0=aoi, lam_vac=wavelength)
+        s_data = coh_tmm('s', RIs, thicks, aoi, wavelength)
+        p_data = coh_tmm('p', RIs, thicks, aoi, wavelength)
         rs = s_data['r']
         rp = p_data['r']
     
         psi[idx]    = np.arctan(abs(rp/rs))
         delta[idx]  = np.angle(1/(-rp/rs))+np.pi
+
     return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
