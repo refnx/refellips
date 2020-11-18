@@ -221,6 +221,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     AOI = np.array(AOI)
     AOI = AOI*(np.pi/180)
 
+    layers[0, 2] = 0 # infinate medium cannot have an extinction coeff
     RIs        = layers[:, 1] + layers[:, 2]*1j
     thicks     = layers[:, 0]/10 #Ang to nm
     thicks[0]  = np.inf
@@ -231,8 +232,10 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     
 
     for idx, aoi in enumerate(AOI):
-        s_data = coh_tmm('s', n_list=RIs, d_list=thicks, th_0=aoi, lam_vac=wavelength)
-        p_data = coh_tmm('p', n_list=RIs, d_list=thicks, th_0=aoi, lam_vac=wavelength)
+        s_data = coh_tmm('s', n_list=RIs, d_list=thicks, th_0=aoi,
+                         lam_vac=wavelength)
+        p_data = coh_tmm('p', n_list=RIs, d_list=thicks, th_0=aoi,
+                         lam_vac=wavelength)
         rs = s_data['r']
         rp = p_data['r']
     
