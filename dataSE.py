@@ -74,7 +74,6 @@ class DataSE(object):
 
     def __init__(self, data=None, name=None, delimiter='\t', **kwds):
         self.filename = None
-        self.name = None
 
         self.delimiter = delimiter
         self.metadata = kwds
@@ -269,9 +268,8 @@ class DataSE(object):
         if self.filename is not None:
             with open(self.filename) as f:
                 self.load(f)
-                
-                
-                
+
+
 def open_EP4file(fname):
     df = pd.read_csv(fname,sep='\t',skiprows=[1])
     df = df.dropna(0,how='any')   
@@ -330,13 +328,14 @@ def _loadEP4(df):
     Dataframe should have colums ['#Lambda','AOI','Psi','Delta']. Optionally
     can have columns [X_pos, Y_pos]
     """
+
     try:
         df['X_pos']
         df['Y_pos']
         loc_data = True
     except KeyError:
         loc_data = False
-    
+
     if loc_data and (len(df['X_pos'].drop_duplicates()) > 1 or len(df['Y_pos'].drop_duplicates())>1):
         print ('Treating as multiple locations')
         df = df[['#Lambda', 'AOI','Psi','Delta','X_pos', 'Y_pos']]
