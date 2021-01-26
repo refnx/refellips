@@ -153,7 +153,7 @@ class ObjectiveSE(BaseObjective):
         **int** the number of points in the dataset.
 
         """
-        return self.data.y.size
+        return self.data._wav.size
 
 
     def varying_parameters(self):
@@ -170,23 +170,24 @@ class ObjectiveSE(BaseObjective):
         p.data = list(f_unique(p for p in flatten(self.parameters) if p.vary))
         return p
 
-    def generative(self, pvals=None):
-        """
-        Calculate the generative (dependent variable) function associated with
-        the model.
+    # def generative(self, pvals=None):
+    #     """
+    #     Calculate the generative (dependent variable) function associated with
+    #     the model.
 
-        Parameters
-        ----------
-        pvals : array-like or refnx.analysis.Parameters
-            values for the varying or entire set of parameters
+    #     Parameters
+    #     ----------
+    #     pvals : array-like or refnx.analysis.Parameters
+    #         values for the varying or entire set of parameters
 
-        Returns
-        -------
-        model : np.ndarray
+    #     Returns
+    #     -------
+    #     model : np.ndarray
 
-        """
-        self.setp(pvals)
-        return self.model(self.data.x, x_err=self.data.x_err)
+    #     """
+#
+#        self.setp(pvals)
+#        return self.model(self.data.x, x_err=self.data.x_err)
 
     def residuals(self, pvals=None):
         """
