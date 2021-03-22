@@ -5,8 +5,9 @@ Created on Sun Sep 13 09:05:38 2020
 @author: Isaac
 """
 import numpy as np
-from tmm import coh_tmm
+from numpy.lib.scimath import arcsin
 
+EPSILON = np.finfo(np.float64).eps
 
 from refnx.analysis import (
     Parameters,
@@ -14,6 +15,165 @@ from refnx.analysis import (
     possibly_create_parameter,
     Transform,
 )
+
+def interface_r_s(n_i, n_f, th_i, th_f):
+    return ((n_i * np.cos(th_i) - n_f * np.cos(th_f)) /
+                (n_i * np.cos(th_i) + n_f * np.cos(th_f)))
+
+def interface_r_p(n_i, n_f, th_i, th_f):
+    return ((n_f * np.cos(th_i) - n_i * np.cos(th_f)) /
+            (n_f * np.cos(th_i) + n_i * np.cos(th_f)))
+
+def interface_t_s(n_i, n_f, th_i, th_f):
+    return 2 * n_i * np.cos(th_i) / (n_i * np.cos(th_i) + n_f * np.cos(th_f))
+
+def interface_t_p(n_i, n_f, th_i, th_f):
+    return 2 * n_i * np.cos(th_i) / (n_f * np.cos(th_i) + n_i * np.cos(th_f))
+
+def coh_tmm(n_list, d_list, th_0, lam_vac):
+    """
+    Main "coherent transfer matrix method" calc. Given parameters of a stack,
+    calculates everything you could ever want to know about how light
+    propagates in it. (If performance is an issue, you can delete some of the
+    calculations without affecting the rest.)
+
+    n_list is the list of refractive indices, in the order that the light would
+    pass through them. The 0'th element of the list should be the semi-infinite
+    medium from which the light enters, the last element should be the semi-
+    infinite medium to which the light exits (if any exits).
+
+    th_0 is the angle of incidence: 0 for normal, pi/2 for glancing.
+    Remember, for a dissipative incoming medium (n_list[0] is not real), th_0
+    should be complex so that n0 sin(th0) is real (intensity is constant as
+    a function of lateral position).
+
+    d_list is the list of layer thicknesses (front to back). Should correspond
+    one-to-one with elements of n_list. First and last elements should be "inf".
+
+    lam_vac is vacuum wavelength of the light.
+
+    Outputs the following as a dictionary (see manual for details)
+
+    * r--reflection amplitude
+    * t--transmission amplitude
+    * kz_list--normal component of complex angular wavenumber for
+      forward-traveling wave in each layer.
+    * th_list--(complex) propagation angle (in radians) in each layer
+    * pol, n_list, d_list, th_0, lam_vac--same as input
+
+    """
+    # Convert lists to numpy arrays if they're not already.
+    n_list = np.asarray(n_list)
+    d_list = np.asfarray(d_list)
+    num_layers = n_list.size
+
+    th_0, lam_vac = [np.array(a) for a in np.broadcast_arrays(th_0, lam_vac)]
+    orig_shp = th_0.shape
+    th_0 = np.ravel(th_0)
+    lam_vac = np.ravel(lam_vac)
+    
+    # Input tests
+    assert (np.abs(np.imag(n_list[0] * np.sin(th_0))) < 100*EPSILON).all(), 'Error in n0 or th0!'
+    
+    # I've commented this check out because it should be the same as the first forward angle check
+    # once the refracted angles are calculated
+    # assert is_forward_angle(n_list[0], th_0), 'Error in n0 or th0!'
+    
+    # th_list is a list with, for each layer, the angle that the light travels
+    # through the layer. Computed with Snell's law. Note that the "angles" may be
+    # complex!
+    # Important that the arcsin here is numpy.lib.scimath.arcsin, not
+    # numpy.arcsin! (They give different results e.g. for arcsin(2).)
+    
+    #(NLAYERS, NUMPNTS)
+    th_list = arcsin(n_list[0] * np.sin(th_0[None, :]) / n_list[:, None])
+    
+    # The first and last entry need to be the forward angle (the intermediate
+    # layers don't matter, see https://arxiv.org/abs/1603.02720 Section 5)
+
+    # TODO VECTORISE FORWARD ANGLE
+#     if not is_forward_angle(n_list[0], th_list[0]):
+#         th_list[0] = pi - th_list[0]
+#     if not is_forward_angle(n_list[-1], th_list[-1]):
+#         th_list[-1] = pi - th_list[-1]
+
+    # kz is the z-component of (complex) angular wavevector for forward-moving
+    # wave. Positive imaginary part means decaying.
+    # kz_list.shape = (NLAYERS, NUMPOINTS)
+    kz_list = 2 * np.pi * n_list[:, None] * np.cos(th_list) / lam_vac
+
+    if num_layers > 2:
+        # delta is the total phase accrued by traveling through a given layer.
+        # don't work it out for the fronting/backing media
+        # delta.shape = (NLAYERS - 2, NUMPNTS)
+        delta = kz_list[1:-1] * d_list[1:-1, None]
+
+        # For a very opaque layer, reset delta to avoid divide-by-0 and similar
+        # errors. The criterion imag(delta) > 35 corresponds to single-pass
+        # transmission < 1e-30 --- small enough that the exact value doesn't
+        # matter.
+        if (np.imag(delta) > 35).any():
+            np.clip(delta.imag, -np.inf, 35, out=delta.imag)
+
+    results = {}
+
+    polarisations = [["s", interface_r_s, interface_t_s],
+                     ["p", interface_r_p, interface_t_p]]
+
+    for pol, interface_r, interface_t in polarisations:
+        # t_list and r_list are transmission and reflection amplitudes,
+        # respectively, coming from i, going to j.
+        # r_list.shape = (NLAYERS - 1, NUMPOINTS)
+        r_list = interface_r(n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:])
+        t_list = interface_t(n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:])
+
+        # At the interface between the (n-1)st and nth material, let v_n be the
+        # amplitude of the wave on the nth side heading forwards (away from the
+        # boundary), and let w_n be the amplitude on the nth side heading backwards
+        # (towards the boundary). Then (v_n,w_n) = M_n (v_{n+1},w_{n+1}). M_n is
+        # M_list[n]. M_0 and M_{num_layers-1} are not defined.
+        # My M is a bit different than Sernelius's, but Mtilde is the same.
+
+        if num_layers > 2:
+            # calculate the characteristic matrices for all the layers
+            beta = np.exp(1j * delta)
+            beta_inv = 1 / beta
+
+            # M_list00.shape = (NUM_LAYERS - 2, NUMPOINTS)
+            M_list00 = beta_inv / t_list[1:]
+            M_list01 = r_list[1:] * beta_inv / t_list[1:]
+            M_list10 = r_list[1:] * beta / t_list[1:]
+            M_list11 = beta / t_list[1:]
+        
+        # initial interface
+        # Mtilde00.shape = (NUMPOINTS,)
+        Mtilde00 = 1 / t_list[0]
+        Mtilde01 = r_list[0] / t_list[0]
+        Mtilde10 = Mtilde01
+        Mtilde11 = Mtilde00
+
+        # propagate characteristic matrices
+        for i in range(0, num_layers - 2):
+            # matrix multiply Mtilde by characteristic matrix
+            p00 = Mtilde00 * M_list00[i, :] + Mtilde01 * M_list10[i, :]
+            p01 = Mtilde00 * M_list01[i, :] + Mtilde01 * M_list11[i, :]
+            p10 = Mtilde10 * M_list00[i, :] + Mtilde11 * M_list10[i, :]
+            p11 = Mtilde10 * M_list01[i, :] + Mtilde11 * M_list11[i, :]
+
+            Mtilde00 = p00
+            Mtilde01 = p01   
+            Mtilde10 = p10
+            Mtilde11 = p11
+
+        # Net complex transmission and reflection amplitudes
+        r = Mtilde10 / Mtilde00
+        t = 1 / Mtilde00
+        results[f"r_{pol}"] = r
+        results[f"t_{pol}"] = t
+
+    return results
+
+
 
 class ReflectModelSE(object):
     r"""
@@ -226,19 +386,26 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     thicks     = layers[:, 0]/10 #Ang to nm
     thicks[0]  = np.inf
     thicks[-1] = np.inf
-    
-    psi   = np.zeros_like(AOI)
-    delta = np.zeros_like(AOI)
-    
 
-    for idx, aoi in enumerate(AOI):
-        s_data = coh_tmm('s', n_list=RIs, d_list=thicks, th_0=aoi,
-                         lam_vac=wavelength)
-        p_data = coh_tmm('p', n_list=RIs, d_list=thicks, th_0=aoi,
-                         lam_vac=wavelength)
-        rs = s_data['r']
-        rp = p_data['r']
-    
-        psi[idx]    = np.arctan(abs(rp/rs))
-        delta[idx]  = np.angle(1/(-rp/rs))+np.pi
+    results = coh_tmm(n_list=RIs, d_list=thicks, th_0=AOI,
+                      lam_vac=wavelength)
+
+    rs = results['r_s']
+    rp = results['r_p']
+
+    psi   = np.arctan(abs(rp/rs))
+    delta = np.angle(1/(-rp/rs))+np.pi
+
     return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
+
+
+
+
+
+
+
+
+
+
+
+
