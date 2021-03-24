@@ -32,10 +32,8 @@ def interface_t_p(n_i, n_f, th_i, th_f):
 
 def coh_tmm(n_list, d_list, th_0, lam_vac):
     """
-    Main "coherent transfer matrix method" calc. Given parameters of a stack,
-    calculates everything you could ever want to know about how light
-    propagates in it. (If performance is an issue, you can delete some of the
-    calculations without affecting the rest.)
+    Code adapted by that of Byrnes - see https://arxiv.org/abs/1603.02720
+
 
     n_list is the list of refractive indices, in the order that the light would
     pass through them. The 0'th element of the list should be the semi-infinite
@@ -52,15 +50,6 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
 
     lam_vac is vacuum wavelength of the light.
 
-    Outputs the following as a dictionary (see manual for details)
-
-    * r--reflection amplitude
-    * t--transmission amplitude
-    * kz_list--normal component of complex angular wavenumber for
-      forward-traveling wave in each layer.
-    * th_list--(complex) propagation angle (in radians) in each layer
-    * pol, n_list, d_list, th_0, lam_vac--same as input
-
     """
     # Convert lists to numpy arrays if they're not already.
     n_list = np.asarray(n_list)
@@ -74,20 +63,16 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     
     # Input tests
     assert (np.abs(np.imag(n_list[0] * np.sin(th_0))) < 100*EPSILON).all(), 'Error in n0 or th0!'
-    
-    # I've commented this check out because it should be the same as the first forward angle check
-    # once the refracted angles are calculated
-    # assert is_forward_angle(n_list[0], th_0), 'Error in n0 or th0!'
-    
+
     # th_list is a list with, for each layer, the angle that the light travels
-    # through the layer. Computed with Snell's law. Note that the "angles" may be
-    # complex!
+    # through the layer. Computed with Snell's law. Note that the "angles" may
+    # be complex!
     # Important that the arcsin here is numpy.lib.scimath.arcsin, not
     # numpy.arcsin! (They give different results e.g. for arcsin(2).)
-    
+
     #(NLAYERS, NUMPNTS)
     th_list = arcsin(n_list[0] * np.sin(th_0[None, :]) / n_list[:, None])
-    
+
     # The first and last entry need to be the forward angle (the intermediate
     # layers don't matter, see https://arxiv.org/abs/1603.02720 Section 5)
 
@@ -144,7 +129,7 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
             M_list01 = r_list[1:] * beta_inv / t_list[1:]
             M_list10 = r_list[1:] * beta / t_list[1:]
             M_list11 = beta / t_list[1:]
-        
+
         # initial interface
         # Mtilde00.shape = (NUMPOINTS,)
         Mtilde00 = 1 / t_list[0]
@@ -161,7 +146,7 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
             p11 = Mtilde10 * M_list01[i, :] + Mtilde11 * M_list11[i, :]
 
             Mtilde00 = p00
-            Mtilde01 = p01   
+            Mtilde01 = p01
             Mtilde10 = p10
             Mtilde11 = p11
 
@@ -172,6 +157,65 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
         results[f"t_{pol}"] = t
 
     return results
+
+
+def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
+    """
+    Get delta and psi using the transfer matrix method.
+
+    This is a copy of the refnx Abeles code. If we can wrap this around tmm
+    we should be able to get it into refnx propper.
+
+    There will be some work to smooth things out upstream (SLD objects etc.)
+    but that should become clearer when this is written.
+
+    Parameters
+    ----------
+    AOI: array_like
+        the angle of incidence values required for the calculation.
+        Units = degrees
+    layers: np.ndarray
+        coefficients required for the calculation, has shape (2 + N, 4),
+        where N is the number of layers
+        layers[0, 1] - refractive index of fronting (/1e-6 Angstrom**-2)
+        layers[0, 2] - extinction coefficent of fronting (/1e-6 Angstrom**-2)
+        layers[N, 0] - thickness of layer N
+        layers[N, 1] - refractive index of layer N (/1e-6 Angstrom**-2)
+        layers[N, 2] - extinction coefficent of layer N (/1e-6 Angstrom**-2)
+        layers[N, 3] - roughness between layer N-1/N
+        layers[-1, 1] - refractive index of backing (/1e-6 Angstrom**-2)
+        layers[-1, 2] - extinction coefficent of backing (/1e-6 Angstrom**-2)
+        layers[-1, 3] - roughness between backing and last layer
+
+    Returns
+    -------
+    Psi: np.ndarray
+        Calculated Psi values for each aoi value.
+    Delta: np.ndarray
+        Calculated Delta values for each aoi value.
+
+
+    """
+    AOI = np.array(AOI)
+    AOI = AOI*(np.pi/180)
+
+    layers[0, 2] = 0 # infinate medium cannot have an extinction coeff
+    RIs        = layers[:, 1] + layers[:, 2]*1j
+    thicks     = layers[:, 0]/10 #Ang to nm
+    thicks[0]  = np.inf
+    thicks[-1] = np.inf
+
+    results = coh_tmm(n_list=RIs, d_list=thicks, th_0=AOI,
+                      lam_vac=wavelength)
+
+    rs = results['r_s']
+    rp = results['r_p']
+
+    psi   = np.arctan(abs(rp/rs))
+    #delta = np.angle(1/(-rp/rs))+np.pi
+    delta = np.angle(1/(-rp/rs))+np.pi
+    delta[delta>np.pi] = 2*np.pi - delta[delta>np.pi]
+    return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
 
 
 
@@ -336,67 +380,6 @@ class ReflectModelSE(object):
         """
         self.structure = self._structure
         return self._parameters
-    
-    
-def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
-    """
-    Get delta and psi using the transfer matrix method.
-    
-    This is a copy of the refnx Abeles code. If we can wrap this around tmm
-    we should be able to get it into refnx propper.
-    
-    There will be some work to smooth things out upstream (SLD objects etc.)
-    but that should become clearer when this is written.
-    
-    Lets do one function call for each wavelength for now. To start with its
-    probably easiest just to impliment it for one wavelength
-    
-    Parameters
-    ----------
-    AOI: array_like
-        the angle of incidence values required for the calculation.
-        Units = degrees
-    layers: np.ndarray
-        coefficients required for the calculation, has shape (2 + N, 4),
-        where N is the number of layers
-        layers[0, 1] - refractive index of fronting (/1e-6 Angstrom**-2)
-        layers[0, 2] - extinction coefficent of fronting (/1e-6 Angstrom**-2)
-        layers[N, 0] - thickness of layer N
-        layers[N, 1] - refractive index of layer N (/1e-6 Angstrom**-2)
-        layers[N, 2] - extinction coefficent of layer N (/1e-6 Angstrom**-2)
-        layers[N, 3] - roughness between layer N-1/N
-        layers[-1, 1] - refractive index of backing (/1e-6 Angstrom**-2)
-        layers[-1, 2] - extinction coefficent of backing (/1e-6 Angstrom**-2)
-        layers[-1, 3] - roughness between backing and last layer
-
-    Returns
-    -------
-    Psi: np.ndarray
-        Calculated Psi values for each aoi value.
-    Delta: np.ndarray
-        Calculated Delta values for each aoi value.
-
-
-    """
-    AOI = np.array(AOI)
-    AOI = AOI*(np.pi/180)
-
-    layers[0, 2] = 0 # infinate medium cannot have an extinction coeff
-    RIs        = layers[:, 1] + layers[:, 2]*1j
-    thicks     = layers[:, 0]/10 #Ang to nm
-    thicks[0]  = np.inf
-    thicks[-1] = np.inf
-
-    results = coh_tmm(n_list=RIs, d_list=thicks, th_0=AOI,
-                      lam_vac=wavelength)
-
-    rs = results['r_s']
-    rp = results['r_p']
-
-    psi   = np.arctan(abs(rp/rs))
-    delta = np.angle(1/(-rp/rs))+np.pi
-
-    return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
 
 
 
