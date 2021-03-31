@@ -159,7 +159,7 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     return results
 
 
-def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
+def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     """
     Get delta and psi using the transfer matrix method.
 
@@ -212,9 +212,14 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset):
     rp = results['r_p']
 
     psi   = np.arctan(abs(rp/rs))
-    #delta = np.angle(1/(-rp/rs))+np.pi
     delta = np.angle(1/(-rp/rs))+np.pi
-    delta[delta>np.pi] = 2*np.pi - delta[delta>np.pi]
+
+    if reflect_delta:
+        # Different ellipsometeres / modelling software have different
+        # conventions for what to do with Delta's above 180. Wvase appears to
+        # reflect Delta around 180, which is what I have tried to replicate.
+        delta[delta>np.pi] = 2*np.pi - delta[delta>np.pi]
+
     return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
 
 
@@ -239,6 +244,7 @@ class ReflectModelSE(object):
         self.name = name
         self.DeltaOffset = delta_offset
         self._parameters = None
+        self._flip_delta = False
 
         # to make it more like a refnx.analysis.Model
         self.fitfunc = None
@@ -336,7 +342,8 @@ class ReflectModelSE(object):
             AOI=aoi,
             layers=self.structure.slabs()[..., :4],
             wavelength=self.wav.value,
-            delta_offset=self.delOffset.value
+            delta_offset=self.delOffset.value,
+            reflect_delta=self._flip_delta
         )
 
     def logp(self):

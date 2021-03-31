@@ -47,6 +47,11 @@ class DataSE(object):
         equates to `True`, then the point is included, if a mask value equates
         to `False` it is excluded.
 
+    reflect_delta : bool
+        Specifies whether delta values are reflected around 180 degrees
+        (i.e., 360 - delta[delta > 180]), as is standard for some ellipsometry
+        analysis packages (i.e., WVASE).
+
     Attributes
     ----------
     data : tuple of np.ndarray
@@ -72,7 +77,8 @@ class DataSE(object):
 
     """
 
-    def __init__(self, data=None, name=None, delimiter='\t', **kwds):
+    def __init__(self, data=None, name=None, delimiter='\t',
+                 reflect_delta=False, **kwds):
         self.filename = None
 
         self.delimiter = delimiter
@@ -89,7 +95,7 @@ class DataSE(object):
         if hasattr(data, "read") or type(data) is str:
             self.load(data)
             self.filename = data
-            
+
         # if it's a already a DataSE object then just use that.
         elif isinstance(data, DataSE):
             self.name = data.name
@@ -99,13 +105,19 @@ class DataSE(object):
             self._aoi = data._aoi
             self._psi = data._psi
             self._delta = data._delta
-            
+
         # If its a list or tuple then assume its in format wavelength, AOI, psi, delta.
         elif isinstance(data, list) or isinstance(data, tuple):
             self._wav = data[0]
             self._aoi = data[1]
             self._psi = data[2]
             self._delta = data[3]
+
+        self._delta_flipped = False
+        if reflect_delta:
+            dmask = self._delta > 180
+            self._delta[dmask] = 360-self._delta[dmask]
+            self._delta_flipped = True
 
         self.mask = np.ones_like(self._wav, dtype=bool)
 
@@ -270,7 +282,7 @@ class DataSE(object):
                 self.load(f)
 
 
-def open_EP4file(fname):
+def open_EP4file(fname, reflect_delta=False):
     df = pd.read_csv(fname,sep='\t',skiprows=[1])
     df = df.dropna(0,how='any')   
 
@@ -302,7 +314,8 @@ def open_EP4file(fname):
         del op['psi']
         del op['delta']
         name = _make_EP4dname(fname, op)
-        datasets.append(DataSE(data, name=name, **op))
+        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta,
+                               **op))
 
     if len(datasets) == 1:
         return datasets[0]
