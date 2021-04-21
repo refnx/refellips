@@ -287,8 +287,7 @@ def open_EP4file(fname):
         for t in df['Time'].drop_duplicates():
             tdf = df[df['Time']== t]
             output += _loadEP4(tdf) # not sure if this will work
-            for op in output:
-                op['time'] = t
+            output[-1]['time'] = t
     else:
         output = _loadEP4(df)
         for op in output:
