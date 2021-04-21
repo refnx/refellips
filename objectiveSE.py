@@ -105,6 +105,9 @@ class ObjectiveSE(BaseObjective):
         if name is None:
             self.name = id(self)
 
+        self.model._flip_delta = self.data._delta_flipped
+
+
 
     def __str__(self):
         s = ["{:_>80}".format("")]
