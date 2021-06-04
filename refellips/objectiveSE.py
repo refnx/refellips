@@ -13,7 +13,7 @@ from scipy.optimize._numdiff import approx_derivative
 
 
 from refnx.analysis.objective import BaseObjective
-from dataSE import DataSE
+from .dataSE import DataSE
 
 from refnx.analysis import (
     is_parameter,
