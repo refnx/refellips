@@ -9,3 +9,7 @@
 __pycache__
 .ipynb_checkpoints/
 .cache/
+build/
+refellips.egg-info/
+refellips/version.py
+dist/
