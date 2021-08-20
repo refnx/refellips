@@ -7,14 +7,9 @@ Created on Sun Sep 13 08:11:49 2020
 """"
 A basic representation of a 1D dataset
 """
-import os.path
-import re
 
 import numpy as np
 import pandas as pd
-from scipy._lib._util import check_random_state
-from refnx.util.nsplice import get_scaling_in_overlap
-from refnx._lib import possibly_open_file
 
 class DataSE(object):
     r"""
@@ -23,10 +18,7 @@ class DataSE(object):
     Parameters
     ----------
     data : str, file-like or tuple of np.ndarray, optional
-        `data` can be a string or file-like object referring to a File to load
-        the dataset from. The file should be plain text and have 2 to 4
-        columns separated by space, comma or tab. The columns represent
-        `x, y [y_err [, x_err]]`.
+        
 
         Alternatively it is a tuple containing the data from which the dataset
         will be constructed. The tuple should have between 2 and 4 members.
@@ -36,7 +28,7 @@ class DataSE(object):
             - data[2] - uncertainties on y, y_err
             - data[3] - uncertainties on x, x_err
 
-        `data` must be at least two long, `x` and `y`.
+        `data` must be at least three long, `x` and `y`.
         If the tuple is at least 3 long then the third member is `y_err`.
         If the tuple is 4 long then the fourth member is `x_err`.
         All arrays must have the same shape.
@@ -379,3 +371,67 @@ def _loadEP4(df):
         
     return output
     
+
+def open_HORIBAfile(fname, reflect_delta=False):
+    name = fname[:-4]
+    metadata = {}
+    linenodict = {}
+    MDingest = False
+    
+    with open(fname, "r") as f:
+        lines = f.readlines()
+        
+        for i, line in enumerate(lines):
+            l = line[:-1] #Do not print newline character
+            if MDingest == False:    
+                if len(l) > 0 and l[0] == '#':
+                    MDlabel = ' '.join(l.split(' ')[1:])[:-1]
+                    metadata[MDlabel] = []
+                    linenodict[MDlabel] = i
+                    MDingest = True
+    
+            else:
+                if len(l) == 0:
+                    MDingest = False
+                    if len(metadata[MDlabel]) == 0: # there is no metadata for entry
+                        metadata[MDlabel] = None    # Set metadata to none
+                    elif len(metadata[MDlabel]) == 1: # there is only one entry
+                        metadata[MDlabel] = metadata[MDlabel][0] # remove data from list
+    
+                else: # there is metadate in the line
+                    metadata[MDlabel].append(l) #append line to metadata entry
+    
+    data_df = pd.read_csv(fname, skiprows=linenodict['DATA']+1,
+                          nrows=len(metadata['DATA'])-1, encoding='ANSI',
+                          delimiter=' ', usecols=['nm', 'Psi', 'Delta'])
+
+    AOI = float(metadata['INCIDENCE ANGLE'][:5])
+    data_df['AOI'] = AOI*np.ones_like(data_df['nm'])
+    
+    data = [data_df['nm'], data_df['AOI'], data_df['Psi'], data_df['Delta']]
+    
+    return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
