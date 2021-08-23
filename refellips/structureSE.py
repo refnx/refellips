@@ -6,6 +6,7 @@ Created on Mon Sep 21 11:10:38 2020.
 from refnx.reflect.structure import Scatterer
 from refnx.analysis import Parameters, Parameter, possibly_create_parameter
 import numpy as np
+import os
 import warnings
 
 class RI(Scatterer):
@@ -55,6 +56,9 @@ class RI(Scatterer):
     """
 
     def __init__(self, value=None, A=None, B=0, C=0, name=""):
+        if type(value) is str and name == "": # if there is no name get it from the path
+            name = os.path.basename(value).split('.')[0]
+
         super(RI, self).__init__(name=name)
         
         assert np.logical_xor(value is None, A is None),\
@@ -62,6 +66,7 @@ class RI(Scatterer):
 
         if value is not None:
             if type(value) is str:
+
                 try:
                     self._wav, self._RI, self._EC = np.loadtxt(value, skiprows=1,
                                                                delimiter=',', encoding='utf8').T
@@ -70,6 +75,7 @@ class RI(Scatterer):
                                                      delimiter=',',
                                                      usecols=[0, 1], encoding='utf8').T
                     self._EC = np.zeros_like(self._wav)
+
             elif len(value) == 2:
                 self._RI, self._EC = value
                 self._wav = None
@@ -111,6 +117,9 @@ class RI(Scatterer):
             warnings.warn('Using default wavelength (model not linked)')
 
         if np.any(self._wav):
+            # TODO - raise a warning if the wavelength supplied is outside the
+            # wavelength range covered by the data file.
+
             return Parameter(np.interp(wavelength,
                                        self._wav, self._RI))
 
@@ -131,6 +140,9 @@ class RI(Scatterer):
             warnings.warn('Using default wavelength (model not linked)')
 
         if np.any(self._wav):
+            # TODO - raise a warning if the wavelength supplied is outside the
+            # wavelength range covered by the data file.
+
             return Parameter(np.interp(wavelength,
                                        self._wav, self._EC))
         elif self.A is not None:
