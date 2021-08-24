@@ -372,7 +372,7 @@ def _loadEP4(df):
     return output
     
 
-def open_HORIBAfile(fname, reflect_delta=False):
+def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
     name = fname[:-4]
     metadata = {}
     linenodict = {}
@@ -382,7 +382,7 @@ def open_HORIBAfile(fname, reflect_delta=False):
         lines = f.readlines()
         
         for i, line in enumerate(lines):
-            l = line[:-1] #Do not print newline character
+            l = line[:-1] # Drop newline character
             if MDingest == False:    
                 if len(l) > 0 and l[0] == '#':
                     MDlabel = ' '.join(l.split(' ')[1:])[:-1]
@@ -407,8 +407,12 @@ def open_HORIBAfile(fname, reflect_delta=False):
 
     AOI = float(metadata['INCIDENCE ANGLE'][:5])
     data_df['AOI'] = AOI*np.ones_like(data_df['nm'])
-    
+    data_df = data_df[data_df['nm']>lambda_cutoffs[0]]
+    data_df = data_df[data_df['nm']<lambda_cutoffs[1]]
+
     data = [data_df['nm'], data_df['AOI'], data_df['Psi'], data_df['Delta']]
+    
+
     
     return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
 
