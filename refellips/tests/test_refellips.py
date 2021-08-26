@@ -59,7 +59,9 @@ def test_cauchy_against_wvase():
         model.wav = wav
         refellips_RI.append(cauchy.real.value)
 
-    passarr_wvase = np.abs(refellips_RI - wvase_output[:, 1]) / wvase_output[:, 1] < 0.01
+    passarr_wvase = (
+        np.abs(refellips_RI - wvase_output[:, 1]) / wvase_output[:, 1] < 0.01
+    )
     passarr_theory = np.abs(refellips_RI - refin) / refin < 0.01
 
     assert np.all(passarr_wvase)

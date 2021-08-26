@@ -28,8 +28,6 @@ from refnx._lib import unique as f_unique
 from refnx._lib import flatten, approx_hess2
 
 
-
-
 class ObjectiveSE(BaseObjective):
     """
     Objective function for using with curvefitters such as
@@ -91,7 +89,7 @@ class ObjectiveSE(BaseObjective):
         if type(data) is DataSE:
             self.data = data
         else:
-            print('bad')
+            print("bad")
             self.data = DataSE(data=data)
 
         self.lnsigma = lnsigma
@@ -106,8 +104,6 @@ class ObjectiveSE(BaseObjective):
             self.name = id(self)
 
         self.model._flip_delta = self.data._delta_flipped
-
-
 
     def __str__(self):
         s = ["{:_>80}".format("")]
@@ -158,7 +154,6 @@ class ObjectiveSE(BaseObjective):
         """
         return self.data._wav.size
 
-
     def varying_parameters(self):
         """
         Returns
@@ -188,9 +183,9 @@ class ObjectiveSE(BaseObjective):
     #     model : np.ndarray
 
     #     """
-#
-#        self.setp(pvals)
-#        return self.model(self.data.x, x_err=self.data.x_err)
+    #
+    #        self.setp(pvals)
+    #        return self.model(self.data.x, x_err=self.data.x_err)
 
     def residuals(self, pvals=None):
         """
@@ -354,9 +349,7 @@ class ObjectiveSE(BaseObjective):
         logp = np.sum(
             [
                 param.logp()
-                for param in f_unique(
-                    p for p in flatten(self.parameters) if p.vary
-                )
+                for param in f_unique(p for p in flatten(self.parameters) if p.vary)
             ]
         )
 
@@ -405,8 +398,8 @@ class ObjectiveSE(BaseObjective):
 
         # Not implimented! Not sure if you can do this when you don't have
         # any y errors.
-        
-        raise Exception ('logl is not implimented')
+
+        raise Exception("logl is not implimented")
 
     def nll(self, pvals=None):
         """
@@ -423,7 +416,7 @@ class ObjectiveSE(BaseObjective):
             negative log-likelihood (currently just chisqr)
 
         """
-        
+
         # TODO - handle logl properly
         self.setp(pvals)
         # return -self.logl()
@@ -529,9 +522,7 @@ class ObjectiveSE(BaseObjective):
         scale = 1.0
         # scale by reduced chi2 if experimental uncertainties weren't used.
         if not (self.weighted):
-            scale = self.chisqr() / (
-                n_datapoints - len(self.varying_parameters())
-            )
+            scale = self.chisqr() / (n_datapoints - len(self.varying_parameters()))
 
         return covar * scale
 

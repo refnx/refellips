@@ -16,19 +16,26 @@ from refnx.analysis import (
     Transform,
 )
 
+
 def interface_r_s(n_i, n_f, th_i, th_f):
-    return ((n_i * np.cos(th_i) - n_f * np.cos(th_f)) /
-                (n_i * np.cos(th_i) + n_f * np.cos(th_f)))
+    return (n_i * np.cos(th_i) - n_f * np.cos(th_f)) / (
+        n_i * np.cos(th_i) + n_f * np.cos(th_f)
+    )
+
 
 def interface_r_p(n_i, n_f, th_i, th_f):
-    return ((n_f * np.cos(th_i) - n_i * np.cos(th_f)) /
-            (n_f * np.cos(th_i) + n_i * np.cos(th_f)))
+    return (n_f * np.cos(th_i) - n_i * np.cos(th_f)) / (
+        n_f * np.cos(th_i) + n_i * np.cos(th_f)
+    )
+
 
 def interface_t_s(n_i, n_f, th_i, th_f):
     return 2 * n_i * np.cos(th_i) / (n_i * np.cos(th_i) + n_f * np.cos(th_f))
 
+
 def interface_t_p(n_i, n_f, th_i, th_f):
     return 2 * n_i * np.cos(th_i) / (n_f * np.cos(th_i) + n_i * np.cos(th_f))
+
 
 def coh_tmm(n_list, d_list, th_0, lam_vac):
     """
@@ -60,9 +67,11 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     orig_shp = th_0.shape
     th_0 = np.ravel(th_0)
     lam_vac = np.ravel(lam_vac)
-    
+
     # Input tests
-    assert (np.abs(np.imag(n_list[0] * np.sin(th_0))) < 100*EPSILON).all(), 'Error in n0 or th0!'
+    assert (
+        np.abs(np.imag(n_list[0] * np.sin(th_0))) < 100 * EPSILON
+    ).all(), "Error in n0 or th0!"
 
     # th_list is a list with, for each layer, the angle that the light travels
     # through the layer. Computed with Snell's law. Note that the "angles" may
@@ -70,17 +79,17 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     # Important that the arcsin here is numpy.lib.scimath.arcsin, not
     # numpy.arcsin! (They give different results e.g. for arcsin(2).)
 
-    #(NLAYERS, NUMPNTS)
+    # (NLAYERS, NUMPNTS)
     th_list = arcsin(n_list[0] * np.sin(th_0[None, :]) / n_list[:, None])
 
     # The first and last entry need to be the forward angle (the intermediate
     # layers don't matter, see https://arxiv.org/abs/1603.02720 Section 5)
 
     # TODO VECTORISE FORWARD ANGLE
-#     if not is_forward_angle(n_list[0], th_list[0]):
-#         th_list[0] = pi - th_list[0]
-#     if not is_forward_angle(n_list[-1], th_list[-1]):
-#         th_list[-1] = pi - th_list[-1]
+    #     if not is_forward_angle(n_list[0], th_list[0]):
+    #         th_list[0] = pi - th_list[0]
+    #     if not is_forward_angle(n_list[-1], th_list[-1]):
+    #         th_list[-1] = pi - th_list[-1]
 
     # kz is the z-component of (complex) angular wavevector for forward-moving
     # wave. Positive imaginary part means decaying.
@@ -102,15 +111,21 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
 
     results = {}
 
-    polarisations = [["s", interface_r_s, interface_t_s],
-                     ["p", interface_r_p, interface_t_p]]
+    polarisations = [
+        ["s", interface_r_s, interface_t_s],
+        ["p", interface_r_p, interface_t_p],
+    ]
 
     for pol, interface_r, interface_t in polarisations:
         # t_list and r_list are transmission and reflection amplitudes,
         # respectively, coming from i, going to j.
         # r_list.shape = (NLAYERS - 1, NUMPOINTS)
-        r_list = interface_r(n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:])
-        t_list = interface_t(n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:])
+        r_list = interface_r(
+            n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:]
+        )
+        t_list = interface_t(
+            n_list[:-1, None], n_list[1:, None], th_list[:-1], th_list[1:]
+        )
 
         # At the interface between the (n-1)st and nth material, let v_n be the
         # amplitude of the wave on the nth side heading forwards (away from the
@@ -197,31 +212,29 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
 
     """
     AOI = np.array(AOI)
-    AOI = AOI*(np.pi/180)
+    AOI = AOI * (np.pi / 180)
 
-    layers[0, 2] = 0 # infinate medium cannot have an extinction coeff
-    RIs        = layers[:, 1] + layers[:, 2]*1j
-    thicks     = layers[:, 0]/10 #Ang to nm
-    thicks[0]  = np.inf
+    layers[0, 2] = 0  # infinate medium cannot have an extinction coeff
+    RIs = layers[:, 1] + layers[:, 2] * 1j
+    thicks = layers[:, 0] / 10  # Ang to nm
+    thicks[0] = np.inf
     thicks[-1] = np.inf
 
-    results = coh_tmm(n_list=RIs, d_list=thicks, th_0=AOI,
-                      lam_vac=wavelength)
+    results = coh_tmm(n_list=RIs, d_list=thicks, th_0=AOI, lam_vac=wavelength)
 
-    rs = results['r_s']
-    rp = results['r_p']
+    rs = results["r_s"]
+    rp = results["r_p"]
 
-    psi   = np.arctan(abs(rp/rs))
-    delta = np.angle(1/(-rp/rs))+np.pi
+    psi = np.arctan(abs(rp / rs))
+    delta = np.angle(1 / (-rp / rs)) + np.pi
 
     if reflect_delta:
         # Different ellipsometeres / modelling software have different
         # conventions for what to do with Delta's above 180. Wvase appears to
         # reflect Delta around 180, which is what I have tried to replicate.
-        delta[delta>np.pi] = 2*np.pi - delta[delta>np.pi]
+        delta[delta > np.pi] = 2 * np.pi - delta[delta > np.pi]
 
-    return psi*(180/np.pi), delta*(180/np.pi)+delta_offset
-
+    return psi * (180 / np.pi), delta * (180 / np.pi) + delta_offset
 
 
 class ReflectModelSE(object):
@@ -238,7 +251,7 @@ class ReflectModelSE(object):
         self,
         structure,
         wavelength,
-        delta_offset = 0,
+        delta_offset=0,
         name=None,
     ):
         self.name = name
@@ -255,14 +268,14 @@ class ReflectModelSE(object):
         self._structure = None
         self.structure = structure
 
-        self.DeltaOffset = possibly_create_parameter(delta_offset, name='delta offset')
+        self.DeltaOffset = possibly_create_parameter(delta_offset, name="delta offset")
 
         # THIS IS REALLY QUENSTIONABLE
         for x in self._structure:
             try:
                 x.sld.model = self
             except AttributeError:
-                print ("it appears you are using SLD's instead of RIs")
+                print("it appears you are using SLD's instead of RIs")
 
     def __call__(self, aoi, p=None):
         r"""
@@ -307,7 +320,7 @@ class ReflectModelSE(object):
     @property
     def delOffset(self):
         """
-        :class:`refnx.analysis.Parameter` - the calculated delta offset specific 
+        :class:`refnx.analysis.Parameter` - the calculated delta offset specific
         to the ellipsometer and experimental setup used.
 
         """
@@ -316,7 +329,6 @@ class ReflectModelSE(object):
     @delOffset.setter
     def delOffset(self, value):
         self.DeltaOffset.value = value
-
 
     def model(self, aoi, p=None):
         r"""
@@ -343,7 +355,7 @@ class ReflectModelSE(object):
             layers=self.structure.slabs()[..., :4],
             wavelength=self.wav.value,
             delta_offset=self.delOffset.value,
-            reflect_delta=self._flip_delta
+            reflect_delta=self._flip_delta,
         )
 
     def logp(self):
@@ -387,15 +399,3 @@ class ReflectModelSE(object):
         """
         self.structure = self._structure
         return self._parameters
-
-
-
-
-
-
-
-
-
-
-
-
