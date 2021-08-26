@@ -9,6 +9,7 @@ import numpy as np
 import os
 import warnings
 
+
 class RI(Scatterer):
     """
     Object representing a materials wavelength-dependent refractive index.
@@ -56,24 +57,32 @@ class RI(Scatterer):
     """
 
     def __init__(self, value=None, A=None, B=0, C=0, name=""):
-        if type(value) is str and name == "": # if there is no name get it from the path
-            name = os.path.basename(value).split('.')[0]
+        if (
+            type(value) is str and name == ""
+        ):  # if there is no name get it from the path
+            name = os.path.basename(value).split(".")[0]
 
         super(RI, self).__init__(name=name)
-        
-        assert np.logical_xor(value is None, A is None),\
-        'Supply either values or cauchy parameters'
+
+        assert np.logical_xor(
+            value is None, A is None
+        ), "Supply either values or cauchy parameters"
 
         if value is not None:
             if type(value) is str:
 
                 try:
-                    self._wav, self._RI, self._EC = np.loadtxt(value, skiprows=1,
-                                                               delimiter=',', encoding='utf8').T
+                    self._wav, self._RI, self._EC = np.loadtxt(
+                        value, skiprows=1, delimiter=",", encoding="utf8"
+                    ).T
                 except ValueError:
-                    self._wav, self._RI = np.loadtxt(value, skiprows=1,
-                                                     delimiter=',',
-                                                     usecols=[0, 1], encoding='utf8').T
+                    self._wav, self._RI = np.loadtxt(
+                        value,
+                        skiprows=1,
+                        delimiter=",",
+                        usecols=[0, 1],
+                        encoding="utf8",
+                    ).T
                     self._EC = np.zeros_like(self._wav)
 
             elif len(value) == 2:
@@ -82,7 +91,7 @@ class RI(Scatterer):
             elif len(value) == 3:
                 self._wav, self._RI, self._EC = value
             else:
-                raise TypeError ('format not recognised')
+                raise TypeError("format not recognised")
             # convert wavelength from um to nm
             self._wav = self._wav * 1000
         else:
@@ -90,17 +99,15 @@ class RI(Scatterer):
             self._RI = None
             self._EC = None
 
-
-
         self.model = None
         self.set_wav = None
         self._default_wav = 658
         self._parameters = Parameters(name=name)
 
         if A is not None:
-            self.A = possibly_create_parameter(A, name=f'{name} - cauchy A')
-            self.B = possibly_create_parameter(B, name=f'{name} - cauchy B')
-            self.C = possibly_create_parameter(C, name=f'{name} - cauchy C')
+            self.A = possibly_create_parameter(A, name=f"{name} - cauchy A")
+            self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
+            self.C = possibly_create_parameter(C, name=f"{name} - cauchy C")
             self._parameters.extend([self.A, self.B, self.C])
 
         # The RI needs access to the model to calculate the refractive index.
@@ -117,39 +124,40 @@ class RI(Scatterer):
             wavelength = self.set_wav
         else:
             wavelength = self._default_wav
-            warnings.warn('Using default wavelength (model not linked)')
+            warnings.warn("Using default wavelength (model not linked)")
 
         if np.any(self._wav):
             # TODO - raise a warning if the wavelength supplied is outside the
             # wavelength range covered by the data file.
 
-            return Parameter(np.interp(wavelength,
-                                       self._wav, self._RI))
+            return Parameter(np.interp(wavelength, self._wav, self._RI))
 
         elif self.A is not None:
-            return Parameter(self.A.value + (self.B.value*1000**2)/(wavelength**2)\
-                                          + (self.C.value**1000**4)/(wavelength**4))
+            return Parameter(
+                self.A.value
+                + (self.B.value * 1000 ** 2) / (wavelength ** 2)
+                + (self.C.value ** 1000 ** 4) / (wavelength ** 4)
+            )
         else:
             return Parameter(value=self._RI)
 
     @property
     def imag(self, wavelength=None):
         """Extinction coefficent, k."""
-        
+
         if self.model is not None:
             wavelength = self.model.wav
         elif self.set_wav is not None:
             wavelength = self.set_wav
         else:
             wavelength = self._default_wav
-            warnings.warn('Using default wavelength (model not linked)')
+            warnings.warn("Using default wavelength (model not linked)")
 
         if np.any(self._wav):
             # TODO - raise a warning if the wavelength supplied is outside the
             # wavelength range covered by the data file.
 
-            return Parameter(np.interp(wavelength,
-                                       self._wav, self._EC))
+            return Parameter(np.interp(wavelength, self._wav, self._EC))
         elif self.A is not None:
             return Parameter(0)
         else:
@@ -160,7 +168,7 @@ class RI(Scatterer):
         return self._parameters
 
     def __repr__(self):
-        return str(f'n: {self.real.value}, k: {self.imag.value}')
+        return str(f"n: {self.real.value}, k: {self.imag.value}")
 
     def __complex__(self):
         sldc = complex(self.real.value, self.imag.value)

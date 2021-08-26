@@ -11,6 +11,7 @@ A basic representation of a 1D dataset
 import numpy as np
 import pandas as pd
 
+
 class DataSE(object):
     r"""
     A basic representation of a 1D dataset.
@@ -18,8 +19,6 @@ class DataSE(object):
     Parameters
     ----------
     data : str, file-like or tuple of np.ndarray, optional
-        
-
         Alternatively it is a tuple containing the data from which the dataset
         will be constructed. The tuple should have between 2 and 4 members.
 
@@ -69,8 +68,9 @@ class DataSE(object):
 
     """
 
-    def __init__(self, data=None, name=None, delimiter='\t',
-                 reflect_delta=False, **kwds):
+    def __init__(
+        self, data=None, name=None, delimiter="\t", reflect_delta=False, **kwds
+    ):
         self.filename = None
 
         self.delimiter = delimiter
@@ -81,7 +81,6 @@ class DataSE(object):
         self._delta = np.zeros(0)
         self.weighted = False
         self.name = name
-
 
         # if it's a file then open and load the file.
         if hasattr(data, "read") or type(data) is str:
@@ -108,7 +107,7 @@ class DataSE(object):
         self._delta_flipped = False
         if reflect_delta:
             dmask = self._delta > 180
-            self._delta[dmask] = 360-self._delta[dmask]
+            self._delta[dmask] = 360 - self._delta[dmask]
             self._delta_flipped = True
 
         self.mask = np.ones_like(self._wav, dtype=bool)
@@ -195,7 +194,6 @@ class DataSE(object):
         """4-tuple containing the (lambda, AOI, delta, psi) data."""
         return self.wav, self.aoi, self.delta, self.psi
 
-
     @data.setter
     def data(self, data_tuple):
         """
@@ -219,7 +217,6 @@ class DataSE(object):
 
         self.mask = np.ones_like(self._wav, dtype=bool)
 
-
     def save(self, f):
         """
         Save the data to file. Saves the data as 4 column ASCII.
@@ -230,10 +227,12 @@ class DataSE(object):
             File to save the dataset to.
 
         """
-        header = 'wavelength\tAOI\tPsi\tDelta'
+        header = "wavelength\tAOI\tPsi\tDelta"
         np.savetxt(
-            f, np.column_stack((self._wav, self._aoi, self._psi, self._delta)),
-            delimiter='\t', header=header
+            f,
+            np.column_stack((self._wav, self._aoi, self._psi, self._delta)),
+            delimiter="\t",
+            header=header,
         )
 
     def load(self, f):
@@ -251,18 +250,17 @@ class DataSE(object):
         # The problem here is that there is no standard ellipsometry file
 
         skip_lines = 0
-        with open(f, 'r') as text:
-            for i in range(100): # check the first 100 lines
+        with open(f, "r") as text:
+            for i in range(100):  # check the first 100 lines
                 try:
                     float(text.readline().split(self.delimiter)[0])
                     break
                 except ValueError:
                     skip_lines += 1
 
-        self._wav, self._aoi, self._psi, self._delta = np.loadtxt(f, skiprows=skip_lines,
-                                                                  delimiter=self.delimiter,
-                                                                  encoding='utf8').T
-
+        self._wav, self._aoi, self._psi, self._delta = np.loadtxt(
+            f, skiprows=skip_lines, delimiter=self.delimiter, encoding="utf8"
+        ).T
 
     def refresh(self):
         """
@@ -275,38 +273,37 @@ class DataSE(object):
 
 
 def open_EP4file(fname, reflect_delta=False):
-    df = pd.read_csv(fname,sep='\t',skiprows=[1])
-    df = df.dropna(0,how='any')   
+    df = pd.read_csv(fname, sep="\t", skiprows=[1])
+    df = df.dropna(0, how="any")
 
     try:
-        df['Time']
+        df["Time"]
         time_data = True
     except KeyError:
         time_data = False
-        print ('No time data.')
+        print("No time data.")
 
-    if time_data and len(df['Time'].drop_duplicates()) > 1:
-        print ('Treating as time series:')
+    if time_data and len(df["Time"].drop_duplicates()) > 1:
+        print("Treating as time series:")
         output = []
-        for t in df['Time'].drop_duplicates():
-            tdf = df[df['Time']== t]
-            output += _loadEP4(tdf) # not sure if this will work
-            output[-1]['time'] = t
+        for t in df["Time"].drop_duplicates():
+            tdf = df[df["Time"] == t]
+            output += _loadEP4(tdf)  # not sure if this will work
+            output[-1]["time"] = t
     else:
         output = _loadEP4(df)
         for op in output:
-            op['time'] = None
+            op["time"] = None
 
     datasets = []
     for op in output:
-        data = [op['lambda'], op['aoi'], op['psi'], op['delta']]
-        del op['lambda']
-        del op['aoi']
-        del op['psi']
-        del op['delta']
+        data = [op["lambda"], op["aoi"], op["psi"], op["delta"]]
+        del op["lambda"]
+        del op["aoi"]
+        del op["psi"]
+        del op["delta"]
         name = _make_EP4dname(fname, op)
-        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta,
-                               **op))
+        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta, **op))
 
     if len(datasets) == 1:
         return datasets[0]
@@ -314,18 +311,20 @@ def open_EP4file(fname, reflect_delta=False):
         return datasets
 
 
-def _make_EP4dname (name, metadata):
-    base = name[:-len('_20200929-083122.ds.dat')]
-    if metadata['X pos'] is not None:
+def _make_EP4dname(name, metadata):
+    base = name[: -len("_20200929-083122.ds.dat")]
+    if metadata["X pos"] is not None:
         base += f"_x={metadata['X pos']}mm_y={metadata['Y pos']}mm"
-    if metadata['time'] is not None:
+    if metadata["time"] is not None:
         base += f"_t={metadata['time']}s"
-        
+
     return base
+
 
 def custom_round(x, base=0.25):
     x = np.array(x, dtype=float)
-    return np.round((base * np.round(x/base)),2)
+    return np.round((base * np.round(x / base)), 2)
+
 
 def _loadEP4(df):
     """
@@ -334,108 +333,101 @@ def _loadEP4(df):
     """
 
     try:
-        df['X_pos']
-        df['Y_pos']
+        df["X_pos"]
+        df["Y_pos"]
         loc_data = True
     except KeyError:
         loc_data = False
 
-    if loc_data and (len(df['X_pos'].drop_duplicates()) > 1 or len(df['Y_pos'].drop_duplicates())>1):
-        print ('Treating as multiple locations')
-        df = df[['#Lambda', 'AOI','Psi','Delta','X_pos', 'Y_pos']]
-        df.loc[:,'X_pos'] = custom_round(df['X_pos'], base=0.25)
-        df.loc[:,'Y_pos'] = custom_round(df['Y_pos'], base=0.25)
+    if loc_data and (
+        len(df["X_pos"].drop_duplicates()) > 1 or len(df["Y_pos"].drop_duplicates()) > 1
+    ):
+        print("Treating as multiple locations")
+        df = df[["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
+        df.loc[:, "X_pos"] = custom_round(df["X_pos"], base=0.25)
+        df.loc[:, "Y_pos"] = custom_round(df["Y_pos"], base=0.25)
 
         output = []
-        for x in df['X_pos'].drop_duplicates():
-            for y in df['Y_pos'].drop_duplicates():
-                pdf = df[np.logical_and(df['X_pos'] == x, df['Y_pos'] == y)]
-                pdf = pdf[['#Lambda','AOI','Psi','Delta']]
-                if len(pdf.index) > 0 :
-                    ave_pos = pdf.groupby(['AOI', '#Lambda']).mean()
+        for x in df["X_pos"].drop_duplicates():
+            for y in df["Y_pos"].drop_duplicates():
+                pdf = df[np.logical_and(df["X_pos"] == x, df["Y_pos"] == y)]
+                pdf = pdf[["#Lambda", "AOI", "Psi", "Delta"]]
+                if len(pdf.index) > 0:
+                    ave_pos = pdf.groupby(["AOI", "#Lambda"]).mean()
                     ave_pos = ave_pos.reset_index()
-                    summary = {'lambda':np.array(ave_pos['#Lambda']), 'aoi':np.array(ave_pos['AOI']),
-                               'psi':np.array(ave_pos['Psi']), 'delta':np.array(ave_pos['Delta']),
-                               'X pos':x, 'Y pos':y}
+                    summary = {
+                        "lambda": np.array(ave_pos["#Lambda"]),
+                        "aoi": np.array(ave_pos["AOI"]),
+                        "psi": np.array(ave_pos["Psi"]),
+                        "delta": np.array(ave_pos["Delta"]),
+                        "X pos": x,
+                        "Y pos": y,
+                    }
                     output.append(summary)
     else:
-        print ('Treating as single location')
-        df = df[['#Lambda','AOI','Psi','Delta']]
-        ave_pos = df.groupby(['AOI', '#Lambda']).mean()
+        print("Treating as single location")
+        df = df[["#Lambda", "AOI", "Psi", "Delta"]]
+        ave_pos = df.groupby(["AOI", "#Lambda"]).mean()
         ave_pos = ave_pos.reset_index()
 
-        summary = {'lambda':np.array(ave_pos['#Lambda']), 'aoi':np.array(ave_pos['AOI']),
-                   'psi':np.array(ave_pos['Psi']), 'delta':np.array(ave_pos['Delta']),
-                   'X pos':None, 'Y pos':None}
+        summary = {
+            "lambda": np.array(ave_pos["#Lambda"]),
+            "aoi": np.array(ave_pos["AOI"]),
+            "psi": np.array(ave_pos["Psi"]),
+            "delta": np.array(ave_pos["Delta"]),
+            "X pos": None,
+            "Y pos": None,
+        }
         output = [summary]
-        
+
     return output
-    
+
 
 def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
     name = fname[:-4]
     metadata = {}
     linenodict = {}
     MDingest = False
-    
+
     with open(fname, "r") as f:
         lines = f.readlines()
-        
+
         for i, line in enumerate(lines):
-            l = line[:-1] # Drop newline character
-            if MDingest == False:    
-                if len(l) > 0 and l[0] == '#':
-                    MDlabel = ' '.join(l.split(' ')[1:])[:-1]
+            l = line[:-1]  # Drop newline character
+            if not MDingest:
+                if len(l) and l[0] == "#":
+                    MDlabel = " ".join(l.split(" ")[1:])[:-1]
                     metadata[MDlabel] = []
                     linenodict[MDlabel] = i
                     MDingest = True
-    
+
             else:
-                if len(l) == 0:
+                if not len(l):
                     MDingest = False
-                    if len(metadata[MDlabel]) == 0: # there is no metadata for entry
-                        metadata[MDlabel] = None    # Set metadata to none
-                    elif len(metadata[MDlabel]) == 1: # there is only one entry
-                        metadata[MDlabel] = metadata[MDlabel][0] # remove data from list
-    
-                else: # there is metadate in the line
-                    metadata[MDlabel].append(l) #append line to metadata entry
-    
-    data_df = pd.read_csv(fname, skiprows=linenodict['DATA']+1,
-                          nrows=len(metadata['DATA'])-1, encoding='ANSI',
-                          delimiter=' ', usecols=['nm', 'Psi', 'Delta'])
+                    if not len(metadata[MDlabel]):  # there is no metadata for entry
+                        metadata[MDlabel] = None  # Set metadata to none
+                    elif len(metadata[MDlabel]) == 1:  # there is only one entry
+                        metadata[MDlabel] = metadata[MDlabel][
+                            0
+                        ]  # remove data from list
 
-    AOI = float(metadata['INCIDENCE ANGLE'][:5])
-    data_df['AOI'] = AOI*np.ones_like(data_df['nm'])
-    data_df = data_df[data_df['nm']>lambda_cutoffs[0]]
-    data_df = data_df[data_df['nm']<lambda_cutoffs[1]]
+                else:  # there is metadata in the line
+                    metadata[MDlabel].append(l)  # append line to metadata entry
 
-    data = [data_df['nm'], data_df['AOI'], data_df['Psi'], data_df['Delta']]
-    
+    data_df = pd.read_csv(
+        fname,
+        skiprows=linenodict["DATA"] + 1,
+        nrows=len(metadata["DATA"]) - 1,
+        encoding="ANSI",
+        delimiter=" ",
+        usecols=["nm", "Psi", "Delta"],
+    )
 
-    
+    AOI = float(metadata["INCIDENCE ANGLE"][:5])
+    data_df["AOI"] = AOI * np.ones_like(data_df["nm"])
+    data_df = data_df[data_df["nm"] > lambda_cutoffs[0]]
+    data_df = data_df[data_df["nm"] < lambda_cutoffs[1]]
+
+    data = [data_df["nm"], data_df["AOI"], data_df["Psi"], data_df["Delta"]]
+
     return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
