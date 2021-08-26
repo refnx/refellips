@@ -93,6 +93,7 @@ class RI(Scatterer):
 
 
         self.model = None
+        self.set_wav = None
         self._default_wav = 658
         self._parameters = Parameters(name=name)
 
@@ -112,6 +113,8 @@ class RI(Scatterer):
 
         if self.model is not None:
             wavelength = self.model.wav
+        elif self.set_wav is not None:
+            wavelength = self.set_wav
         else:
             wavelength = self._default_wav
             warnings.warn('Using default wavelength (model not linked)')
@@ -135,6 +138,8 @@ class RI(Scatterer):
         
         if self.model is not None:
             wavelength = self.model.wav
+        elif self.set_wav is not None:
+            wavelength = self.set_wav
         else:
             wavelength = self._default_wav
             warnings.warn('Using default wavelength (model not linked)')
