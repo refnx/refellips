@@ -99,8 +99,8 @@ class RI(Scatterer):
 
         if A is not None:
             self.A = possibly_create_parameter(A, name=f'{name} - cauchy A')
-            self.B = possibly_create_parameter(B*1000**2, name=f'{name} - cauchy B')
-            self.C = possibly_create_parameter(C*1000**4, name=f'{name} - cauchy C')
+            self.B = possibly_create_parameter(B, name=f'{name} - cauchy B')
+            self.C = possibly_create_parameter(C, name=f'{name} - cauchy C')
             self._parameters.extend([self.A, self.B, self.C])
 
         # The RI needs access to the model to calculate the refractive index.
@@ -127,8 +127,8 @@ class RI(Scatterer):
                                        self._wav, self._RI))
 
         elif self.A is not None:
-            return Parameter(self.A.value + self.B.value/(wavelength**2)\
-                                          + self.C.value/(wavelength**4))
+            return Parameter(self.A.value + (self.B.value*1000**2)/(wavelength**2)\
+                                          + (self.C.value**1000**4)/(wavelength**4))
         else:
             return Parameter(value=self._RI)
 
