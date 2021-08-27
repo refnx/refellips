@@ -388,6 +388,7 @@ def _loadEP4(df):
     Dataframe should have colums ['#Lambda','AOI','Psi','Delta'].
     Optionally can also have columns [X_pos, Y_pos].
 
+
     Parameters
     ----------
     df : DataFrame
@@ -457,6 +458,10 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
     """
     Opening and loading in a data file created by a Horiba ellipsometer. Data file
     loaded should be of the Horiba file format .spe.
+    
+    Note: This file parser has been written for a specific ellipsometer, no
+    work has been done to ensure it is compatable with all Horiba ellipsometers.
+    If you have trouble with this parser contact the maintainers through github.
 
     Note: This file parser has been written for a specific Horiba ellipsometer, no
     work has been done to ensure it is compatable with all Horiba ellipsometers. If
