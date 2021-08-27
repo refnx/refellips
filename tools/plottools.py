@@ -61,7 +61,7 @@ def plot_ellipsdata (ax, data=None, model=None, objective=None, xaxis='aoi', plo
         unique_wavs = np.unique(data.wav)
         aois = np.linspace(np.min(data.aoi)-5, np.max(data.aoi)+5)
         x = data.aoi
-
+        xlab = 'AOI, °'
 
         if model != None:
             for wav in unique_wavs:
@@ -87,6 +87,7 @@ def plot_ellipsdata (ax, data=None, model=None, objective=None, xaxis='aoi', plo
                 
             ax.plot(wavs, psis, color='r')
             axt.plot(wavs, deltas, color='b')
+            xlab = 'Wavelength, nm'
 
     p=ax.scatter(x, data.psi, color='r')
     d=axt.scatter(x, data.delta, color='b')
@@ -94,11 +95,40 @@ def plot_ellipsdata (ax, data=None, model=None, objective=None, xaxis='aoi', plo
     ax.legend(handles=[p,d], labels=['Psi', 'Delta'])
         
     if plot_labels:
-        ax.set(ylabel='Psi', xlabel='wavelength, nm')
+        ax.set(ylabel='Psi', xlabel=xlab)
         axt.set(ylabel='Delta')
 
 
 def plot_structure(ax, objective=None, structure=None, reverse_structure=False, plot_labels=True):
+    """
+    Plots refractive index as a function of distance from the substrate.
+    Compatible with VASE.
+    
+    Must pass an axis object for plot_structure to plot on. To create an axis
+    object:
+        
+        fig, ax = plt.subplots()
+
+    Parameters
+    ----------
+    ax : matplotlib.axes._subplots.AxesSubplot
+        Axis object on which refractive index values are plotted.
+    objective : refellips.objectiveSE.ObjectiveSE, optional
+        Objective (containing model and data) to plot. If the objective is provided,
+        structure should not be provided. The default is None.
+    structure : refnx.reflect.structure.Structure
+        Structure (which represents the interface) to be plotted. If structure is provided,
+        objective should not be provided. The default is None.
+    reverse_structure : bool
+        Reverses the structure describing the interface - i.e. the order of the slabs is reversed.
+    plot_labels : Bool, optional
+        Whether to plot axis labels. The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
     if objective != None:
         assert structure == None, "you must supply either an objective or structure, not both"
         structure = objective.model.structure
