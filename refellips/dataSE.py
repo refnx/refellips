@@ -10,6 +10,7 @@ A basic representation of a 1D dataset
 
 import numpy as np
 import pandas as pd
+
 pd.options.mode.chained_assignment = None
 
 
@@ -238,7 +239,7 @@ class DataSE(object):
 
     def load(self, f):
         """
-        Load a dataset from file. 
+        Load a dataset from file.
         Must be a 4 column ASCII file with columns [wavelength, AOI, Psi, Delta].
 
         Parameters
@@ -273,14 +274,14 @@ class DataSE(object):
 
 def open_EP4file(fname, reflect_delta=False):
     """
-    Open and load in an Accurion EP4 formmated data file. 
+    Open and load in an Accurion EP4 formmated data file.
     Typically a .dat file.
 
     Parameters
     ----------
     fname : file-handle or string
         File to load the dataset from.
-    
+
     reflect_delta : bool
         Option to reflect delta around 180 degrees (as WVASE would).
 
@@ -331,13 +332,13 @@ def open_EP4file(fname, reflect_delta=False):
 
 def _make_EP4dname(name, metadata):
     """
-    Create a helpful name for a data set based on an Accurion EP4 formmated data file. 
+    Create a helpful name for a data set based on an Accurion EP4 formmated data file.
 
     Parameters
     ----------
     name : file-handle or string
         File name of data set.
-    
+
     metadata : dict
         Dict containinng 'X pos', 'Y pos' and 'time' data.
 
@@ -364,15 +365,15 @@ def custom_round(x, base=0.25):
     ----------
     x : DataFrame, array or list
         Data to be rounded.
-    
+
     base : float
         Base that the rounding will be with respect to.
 
     Returns
     ----------
-    Result of cutsom round : np.array 
+    Result of cutsom round : np.array
 
-    """    
+    """
     x = np.array(x, dtype=float)
     return np.round((base * np.round(x / base)), 2)
 
@@ -386,13 +387,13 @@ def _loadEP4(df):
     Parameters
     ----------
     df : DataFrame
-        Data frame containing the wavelength, angle of incidence, psi and 
+        Data frame containing the wavelength, angle of incidence, psi and
         delta data.
 
     Returns
     ----------
     output : list of dicts
-        Dicts containing wavelength, angle of indcidence, psi, delta and 
+        Dicts containing wavelength, angle of indcidence, psi, delta and
         possible X pos and Y pos.
 
     """
@@ -457,12 +458,12 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
     ----------
     fname : file-handle or string
         File to load the dataset from.
-    
+
     reflect_delta : bool
         Option to reflect delta around 180 degrees (as WVASE would).
 
     lambda_cutoffs : list
-        Specifies the minimum and maximum wavelengths of data to be loaded. 
+        Specifies the minimum and maximum wavelengths of data to be loaded.
         List has length 2.
 
     Returns
