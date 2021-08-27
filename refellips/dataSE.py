@@ -11,6 +11,8 @@ A basic representation of a 1D dataset
 import numpy as np
 import pandas as pd
 
+pd.options.mode.chained_assignment = None
+
 
 class DataSE(object):
     r"""
@@ -82,12 +84,12 @@ class DataSE(object):
         self.weighted = False
         self.name = name
 
-        # if it's a file then open and load the file.
+        # If a file, then open and load the file.
         if hasattr(data, "read") or type(data) is str:
             self.load(data)
             self.filename = data
 
-        # if it's a already a DataSE object then just use that.
+        # If already a DataSE object, then just use that.
         elif isinstance(data, DataSE):
             self.name = data.name
             self.filename = data.filename
@@ -97,7 +99,7 @@ class DataSE(object):
             self._psi = data._psi
             self._delta = data._delta
 
-        # If its a list or tuple then assume its in format wavelength, AOI, psi, delta.
+        # If a list or tuple, then assume its in format wavelength, AOI, psi, delta.
         elif isinstance(data, list) or isinstance(data, tuple):
             self._wav = data[0]
             self._aoi = data[1]
@@ -147,7 +149,7 @@ class DataSE(object):
     @property
     def _unique_wavs(self):
         """
-        List of wavelengths in dataset.
+        List of distinct wavelengths in dataset.
 
         Returns
         -------
@@ -175,7 +177,7 @@ class DataSE(object):
 
     @property
     def psi(self):
-        """Angle of incidence."""
+        """Ellipsometric parameter psi."""
         if self._psi.size > 0:
             return self._psi[self.mask]
         else:
@@ -183,7 +185,7 @@ class DataSE(object):
 
     @property
     def delta(self):
-        """Angle of incidence."""
+        """Ellipsometric parameter delta."""
         if self._delta.size > 0:
             return self._delta[self.mask]
         else:
@@ -197,7 +199,7 @@ class DataSE(object):
     @data.setter
     def data(self, data_tuple):
         """
-        Set the data for this object from supplied data.
+        Set the data for this object from the supplied data.
 
         Parameters
         ----------
@@ -219,7 +221,7 @@ class DataSE(object):
 
     def save(self, f):
         """
-        Save the data to file. Saves the data as 4 column ASCII.
+        Save the data to file. Saves the data as a 4 column ASCII file.
 
         Parameters
         ----------
@@ -237,9 +239,8 @@ class DataSE(object):
 
     def load(self, f):
         """
-        Load a dataset from file. Must be 4 column ASCII.
-
-        wavelength, AOI, Psi, Delta
+        Load a dataset from file.
+        Must be a 4 column ASCII file with columns [wavelength, AOI, Psi, Delta].
 
         Parameters
         ----------
@@ -247,7 +248,6 @@ class DataSE(object):
             File to load the dataset from.
 
         """
-        # The problem here is that there is no standard ellipsometry file
 
         skip_lines = 0
         with open(f, "r") as text:
@@ -273,6 +273,29 @@ class DataSE(object):
 
 
 def open_EP4file(fname, reflect_delta=False):
+    """
+    Open and load in an Accurion EP4 formmated data file.
+    Typically a .dat file.
+
+    Note: This file parser has been written for specific Accurion ellipsometers: EP3 and EP4. No
+    work has been done to ensure it is compatable with all Accurion ellipsometers. If
+    you have trouble with this parser contact the maintainers through github.
+
+    Parameters
+    ----------
+    fname : file-handle or string
+        File to load the dataset from.
+
+    reflect_delta : bool
+        Option to reflect delta around 180 degrees (as WVASE would).
+
+    Returns
+    ----------
+    datasets : DataSE structure
+        Structure containing wavelength, angle of incidence, psi and delta.
+
+
+    """
     df = pd.read_csv(fname, sep="\t", skiprows=[1])
     df = df.dropna(0, how="any")
 
@@ -312,6 +335,23 @@ def open_EP4file(fname, reflect_delta=False):
 
 
 def _make_EP4dname(name, metadata):
+    """
+    Create a helpful name for a data set based on an Accurion EP4 formmated data file.
+
+    Parameters
+    ----------
+    name : file-handle or string
+        File name of data set.
+
+    metadata : dict
+        Dict containinng 'X pos', 'Y pos' and 'time' data.
+
+    Returns
+    ----------
+    base : string
+        Helpful name for the data set.
+
+    """
     base = name[: -len("_20200929-083122.ds.dat")]
     if metadata["X pos"] is not None:
         base += f"_x={metadata['X pos']}mm_y={metadata['Y pos']}mm"
@@ -322,14 +362,45 @@ def _make_EP4dname(name, metadata):
 
 
 def custom_round(x, base=0.25):
+    """
+    Perform rounding to a particular base. Default base is 0.25.
+
+    Parameters
+    ----------
+    x : DataFrame, array or list
+        Data to be rounded.
+
+    base : float
+        Base that the rounding will be with respect to.
+
+    Returns
+    ----------
+    Result of cutsom round : np.array
+
+    """
     x = np.array(x, dtype=float)
     return np.round((base * np.round(x / base)), 2)
 
 
 def _loadEP4(df):
     """
-    Dataframe should have colums ['#Lambda','AOI','Psi','Delta']. Optionally
-    can have columns [X_pos, Y_pos]
+    Specifically loading a data file created by an Accurion EP4 ellipsometer.
+    Dataframe should have colums ['#Lambda','AOI','Psi','Delta'].
+    Optionally can also have columns [X_pos, Y_pos].
+
+
+    Parameters
+    ----------
+    df : DataFrame
+        Data frame containing the wavelength, angle of incidence, psi and
+        delta data.
+
+    Returns
+    ----------
+    output : list of dicts
+        Dicts containing wavelength, angle of indcidence, psi, delta and
+        possible X pos and Y pos.
+
     """
 
     try:
@@ -384,6 +455,33 @@ def _loadEP4(df):
 
 
 def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
+    """
+    Opening and loading in a data file created by a Horiba ellipsometer. Data file
+    loaded should be of the Horiba file format .spe.
+
+    Note: This file parser has been written for a specific ellipsometer, no
+    work has been done to ensure it is compatable with all Horiba ellipsometers.
+    If you have trouble with this parser contact the maintainers through github.
+
+    Parameters
+    ----------
+    fname : file-handle or string
+        File to load the dataset from.
+
+    reflect_delta : bool
+        Option to reflect delta around 180 degrees (as WVASE would).
+
+    lambda_cutoffs : list
+        Specifies the minimum and maximum wavelengths of data to be loaded.
+        List has length 2.
+
+    Returns
+    ----------
+    DataSE : DataSE structure
+        The data file structure from the loaded Horiba file.
+
+    """
+
     name = fname[:-4]
     metadata = {}
     linenodict = {}
