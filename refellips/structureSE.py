@@ -135,8 +135,8 @@ class RI(Scatterer):
         elif self.A is not None:
             return Parameter(
                 self.A.value
-                + (self.B.value * 1000 ** 2) / (wavelength ** 2)
-                + (self.C.value ** 1000 ** 4) / (wavelength ** 4)
+                + (self.B.value * 1000**2) / (wavelength**2)
+                + (self.C.value**1000**4) / (wavelength**4)
             )
         else:
             return Parameter(value=self._RI)

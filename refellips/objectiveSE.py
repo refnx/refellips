@@ -500,7 +500,7 @@ class ObjectiveSE(BaseObjective):
         threshold = np.finfo(float).eps * max(jac.shape) * s[0]
         s = s[s > threshold]
         VT = VT[: s.size]
-        covar = np.dot(VT.T / s ** 2, VT)
+        covar = np.dot(VT.T / s**2, VT)
 
         if used_residuals_scaler:
             # unwind the scaling.
