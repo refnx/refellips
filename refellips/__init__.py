@@ -5,3 +5,8 @@ from .objectiveSE import ObjectiveSE
 
 
 __all__ = [s for s in dir() if not s.startswith("_")]
+
+try:
+    from refellips.version import version as __version__
+except ImportError:
+    __version__ = "version string not created yet"
