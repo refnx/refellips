@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 13 08:11:49 2020
 
-@author: Isaac
-"""
 """"
 A basic representation of a 1D dataset
 """

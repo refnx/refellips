@@ -1,4 +1,3 @@
-
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import os
@@ -27,20 +26,20 @@ def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
-        for k in ['SYSTEMROOT', 'PATH']:
+        for k in ["SYSTEMROOT", "PATH"]:
             v = os.environ.get(k)
             if v is not None:
                 env[k] = v
         # LANGUAGE is used on win32
-        env['LANGUAGE'] = 'C'
-        env['LANG'] = 'C'
-        env['LC_ALL'] = 'C'
+        env["LANGUAGE"] = "C"
+        env["LANG"] = "C"
+        env["LC_ALL"] = "C"
         out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
         return out
 
     try:
-        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
-        GIT_REVISION = out.strip().decode('ascii')
+        out = _minimal_ext_cmd(["git", "rev-parse", "HEAD"])
+        GIT_REVISION = out.strip().decode("ascii")
     except OSError:
         GIT_REVISION = "Unknown"
 
@@ -52,24 +51,25 @@ def get_version_info():
     # write_version_py(), otherwise the import of refellips.version messes
     # up the build under Python 3.
     FULLVERSION = VERSION
-    if os.path.exists('.git'):
+    if os.path.exists(".git"):
         GIT_REVISION = git_version()
-    elif os.path.exists('refellips/version.py'):
+    elif os.path.exists("refellips/version.py"):
         # must be a source distribution, use existing version file
         # load it as a separate module to not load refellips/__init__.py
         import imp
-        version = imp.load_source('refellips.version', 'refellips/version.py')
+
+        version = imp.load_source("refellips.version", "refellips/version.py")
         GIT_REVISION = version.git_revision
     else:
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+        FULLVERSION += ".dev0+" + GIT_REVISION[:7]
 
     return FULLVERSION, GIT_REVISION
 
 
-def write_version_py(filename='refellips/version.py'):
+def write_version_py(filename="refellips/version.py"):
     cnt = """
 # THIS FILE IS GENERATED FROM refellips SETUP.PY
 short_version = '%(version)s'
@@ -82,72 +82,81 @@ if not release:
 """
     FULLVERSION, GIT_REVISION = get_version_info()
 
-    a = open(filename, 'w')
+    a = open(filename, "w")
     try:
-        a.write(cnt % {'version': VERSION,
-                       'full_version': FULLVERSION,
-                       'git_revision': GIT_REVISION,
-                       'isrelease': str(ISRELEASED)})
+        a.write(
+            cnt
+            % {
+                "version": VERSION,
+                "full_version": FULLVERSION,
+                "git_revision": GIT_REVISION,
+                "isrelease": str(ISRELEASED),
+            }
+        )
     finally:
         a.close()
 
 
 class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = 'refellips'
+        self.pytest_args = "refellips"
 
     def run_tests(self):
         import shlex
         import pytest
+
         print("Running tests with pytest")
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
 
 
 info = {
-        'name': 'refellips',
-        'description': 'Ellipsometry Analysis Package',
-        'author': 'Hayden Robertson, Isaac Gresham, Andrew Nelson',
-        'author_email': '',
-        'license': 'MIT',
-        'url': 'https://github.com/haydenrob/refellips',
-        'project_urls': {"Bug Tracker": "",
-                         "Documentation": "",
-                         "Source Code": "https://github.com/haydenrob/refellips"},
-        'platforms': ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        'classifiers': [
-        'Development Status :: 4 - Beta',
-        'Environment :: Console',
-        'Intended Audience :: Science/Research',
-        'License :: Public Domain',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Scientific/Engineering :: Chemistry',
-        'Topic :: Scientific/Engineering :: Physics',
-        ],
-        'packages': packages,
-        'include_package_data': True,
-        'setup_requires': [],
-        'python_requires': '>=3.7',
-        'install_requires': ["numpy", "refnx", "pandas", "scipy"],
-        'extras_require': {'all': []},
-        'tests_require': ['pytest'],
-        'cmdclass': {'test': PyTest},
-        }
+    "name": "refellips",
+    "description": "Ellipsometry Analysis Package",
+    "author": "Hayden Robertson, Isaac Gresham, Andrew Nelson",
+    "author_email": "",
+    "license": "MIT",
+    "url": "https://github.com/haydenrob/refellips",
+    "project_urls": {
+        "Bug Tracker": "",
+        "Documentation": "",
+        "Source Code": "https://github.com/haydenrob/refellips",
+    },
+    "platforms": ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+    "classifiers": [
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: Public Domain",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Chemistry",
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
+    "packages": packages,
+    "include_package_data": True,
+    "setup_requires": [],
+    "python_requires": ">=3.7",
+    "install_requires": ["numpy", "refnx", "pandas", "scipy"],
+    "extras_require": {"all": []},
+    "tests_require": ["pytest"],
+    "cmdclass": {"test": PyTest},
+}
+
 
 def setup_package():
 
     # Rewrite the version file every time
     write_version_py()
-    info['version'] = get_version_info()[0]
-    print(info['version'])
+    info["version"] = get_version_info()[0]
+    print(info["version"])
 
     setup(**info)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup_package()

@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 13 10:08:08 2020
-
-@author: Isaac
-"""
-
 
 import numpy as np
 from numpy.linalg import LinAlgError
@@ -36,7 +30,7 @@ class ObjectiveSE(BaseObjective):
     Parameters
     ----------
     model : refnx.analysis.Model
-        the generative model function. One can also provide an object that
+        the residuals model function. One can also provide an object that
         inherits `refnx.analysis.Model`.
     data : refnx.dataset.Data1D
         data to be analysed.
@@ -168,25 +162,6 @@ class ObjectiveSE(BaseObjective):
         p.data = list(f_unique(p for p in flatten(self.parameters) if p.vary))
         return p
 
-    # def generative(self, pvals=None):
-    #     """
-    #     Calculate the generative (dependent variable) function associated with
-    #     the model.
-
-    #     Parameters
-    #     ----------
-    #     pvals : array-like or refnx.analysis.Parameters
-    #         values for the varying or entire set of parameters
-
-    #     Returns
-    #     -------
-    #     model : np.ndarray
-
-    #     """
-    #
-    #        self.setp(pvals)
-    #        return self.model(self.data.x, x_err=self.data.x_err)
-
     def residuals(self, pvals=None):
         """
         Calculates the residuals for a given fitting system.
@@ -202,7 +177,7 @@ class ObjectiveSE(BaseObjective):
             Residuals, `(data.y - model) / y_err`.
 
         """
-        # COULD BE VERY BROKEN
+
         self.setp(pvals)
         res = []
         for data in self.data:
@@ -396,8 +371,7 @@ class ObjectiveSE(BaseObjective):
         """
         self.setp(pvals)
 
-        # Not implimented! Not sure if you can do this when you don't have
-        # any y errors.
+        # Not implimented yet - unsure if this can be done given no y errors.
 
         raise Exception("logl is not implimented")
 
@@ -500,7 +474,7 @@ class ObjectiveSE(BaseObjective):
         threshold = np.finfo(float).eps * max(jac.shape) * s[0]
         s = s[s > threshold]
         VT = VT[: s.size]
-        covar = np.dot(VT.T / s ** 2, VT)
+        covar = np.dot(VT.T / s**2, VT)
 
         if used_residuals_scaler:
             # unwind the scaling.

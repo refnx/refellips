@@ -1,9 +1,67 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sun Sep 13 09:05:38 2020
+Calculates the ellipsometry parameters Δ and Ψ from a stratified series of
+layers.
 
-@author: Isaac
+TBSD 3-Clause License
+
+Copyright (c) 2020-2022,
+Hayden Robertson (University of Newcastle)
+Isaac Gresham (University of Sydney)
+Andrew Nelson (ANSTO)
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Furthermore, here we adapt code from Byrnes (i.e. the coh_tmm function) under
+the MIT license listed below:
+
+Copyright (C) 2012-2020 Steven Byrnes
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
+# -*- coding: utf-8 -*-
+
 import numpy as np
 from numpy.lib.scimath import arcsin
 
@@ -40,7 +98,6 @@ def interface_t_p(n_i, n_f, th_i, th_f):
 def coh_tmm(n_list, d_list, th_0, lam_vac):
     """
     Code adapted by that of Byrnes - see https://arxiv.org/abs/1603.02720
-
 
     n_list is the list of refractive indices, in the order that the light would
     pass through them. The 0'th element of the list should be the semi-infinite
@@ -81,15 +138,6 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
 
     # (NLAYERS, NUMPNTS)
     th_list = arcsin(n_list[0] * np.sin(th_0[None, :]) / n_list[:, None])
-
-    # The first and last entry need to be the forward angle (the intermediate
-    # layers don't matter, see https://arxiv.org/abs/1603.02720 Section 5)
-
-    # TODO VECTORISE FORWARD ANGLE
-    #     if not is_forward_angle(n_list[0], th_list[0]):
-    #         th_list[0] = pi - th_list[0]
-    #     if not is_forward_angle(n_list[-1], th_list[-1]):
-    #         th_list[-1] = pi - th_list[-1]
 
     # kz is the z-component of (complex) angular wavevector for forward-moving
     # wave. Positive imaginary part means decaying.
@@ -230,8 +278,8 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
 
     if reflect_delta:
         # Different ellipsometeres / modelling software have different
-        # conventions for what to do with Delta's above 180. Wvase appears to
-        # reflect Delta around 180, which is what I have tried to replicate.
+        # conventions for what to do with Delta's above 180. WVASE appears to
+        # reflect Delta around 180, which is what we have attempted to replicate.
         delta[delta > np.pi] = 2 * np.pi - delta[delta > np.pi]
 
     return psi * (180 / np.pi), delta * (180 / np.pi) + delta_offset
@@ -262,7 +310,6 @@ class ReflectModelSE(object):
         # to make it more like a refnx.analysis.Model
         self.fitfunc = None
 
-        # all reflectometry models need a scale factor and background
         self._wav = possibly_create_parameter(wavelength, name="wavelength")
 
         self._structure = None
@@ -270,12 +317,11 @@ class ReflectModelSE(object):
 
         self.DeltaOffset = possibly_create_parameter(delta_offset, name="delta offset")
 
-        # THIS IS REALLY QUENSTIONABLE
         for x in self._structure:
             try:
                 x.sld.model = self
             except AttributeError:
-                print("it appears you are using SLD's instead of RIs")
+                print("it appears you are using SLDs instead of RIs")
 
     def __call__(self, aoi, p=None):
         r"""
