@@ -180,14 +180,16 @@ class ObjectiveSE(BaseObjective):
 
         self.setp(pvals)
         res = []
-        for data in self.data:
-            self.model.wav = data._current_wav
+        for data in self.data.unique_wavelength_data():
+            wav, aoi, psi_d, delta_d = data
 
-            psi, delta = self.model(self.data.aoi)
-            res.append(self.data.psi - psi)
-            res.append(self.data.delta - delta)
+            self.model.wav = wav
 
-        return np.reshape(res, (-1))
+            psi, delta = self.model(aoi)
+            res.append(psi_d - psi)
+            res.append(delta_d - delta)
+
+        return np.ravel(res)
 
     def chisqr(self, pvals=None):
         """
