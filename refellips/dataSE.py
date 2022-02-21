@@ -18,16 +18,14 @@ class DataSE(object):
     ----------
     data : str, file-like or tuple of np.ndarray, optional
         Alternatively it is a tuple containing the data from which the dataset
-        will be constructed. The tuple should have between 2 and 4 members.
+        will be constructed. The tuple should have 4 members.
 
-            - data[0] - x
-            - data[1] - y
-            - data[2] - uncertainties on y, y_err
-            - data[3] - uncertainties on x, x_err
+            - data[0] - Wavelength
+            - data[1] - Angle of incidence
+            - data[2] - Psi
+            - data[3] - Delta
 
-        `data` must be at least three long, `x` and `y`.
-        If the tuple is at least 3 long then the third member is `y_err`.
-        If the tuple is 4 long then the fourth member is `x_err`.
+        `data` must be four long.
         All arrays must have the same shape.
 
     mask : array-like

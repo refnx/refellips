@@ -1,3 +1,4 @@
+""""""
 """
 Calculates the ellipsometry parameters Δ and Ψ from a stratified series of
 layers.
@@ -225,12 +226,6 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
 def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     """
     Get delta and psi using the transfer matrix method.
-
-    This is a copy of the refnx Abeles code. If we can wrap this around tmm
-    we should be able to get it into refnx propper.
-
-    There will be some work to smooth things out upstream (SLD objects etc.)
-    but that should become clearer when this is written.
 
     Parameters
     ----------
