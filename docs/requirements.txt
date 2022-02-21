@@ -1,0 +1,17 @@
+setuptools
+nbsphinx
+jupyter-sphinx
+sphinxcontrib-bibtex<2.0.0
+sphinx_rtd_theme
+pandoc
+scipy
+numpy
+sphinx
+pandas
+numpydoc
+nbconvert
+jupyter
+matplotlib
+pytest
+refnx
+myst_parser
