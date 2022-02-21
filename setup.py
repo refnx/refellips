@@ -21,6 +21,29 @@ platform = sys.platform
 packages = find_packages()
 
 
+class PyTest(TestCommand):
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = "refellips"
+
+    def run_tests(self):
+        import shlex
+        import pytest
+
+        print("Running tests with pytest")
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+info = {
+    "packages": packages,
+    "include_package_data": True,
+    "cmdclass": {"test": PyTest},
+}
+
+
 # Return the git revision as a string
 def git_version():
     def _minimal_ext_cmd(cmd):
@@ -97,59 +120,7 @@ if not release:
         a.close()
 
 
-class PyTest(TestCommand):
-    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = "refellips"
-
-    def run_tests(self):
-        import shlex
-        import pytest
-
-        print("Running tests with pytest")
-        errno = pytest.main(shlex.split(self.pytest_args))
-        sys.exit(errno)
-
-
-info = {
-    "name": "refellips",
-    "description": "Ellipsometry Analysis Package",
-    "author": "Hayden Robertson, Isaac Gresham, Andrew Nelson",
-    "author_email": "",
-    "license": "MIT",
-    "url": "https://github.com/haydenrob/refellips",
-    "project_urls": {
-        "Bug Tracker": "",
-        "Documentation": "",
-        "Source Code": "https://github.com/haydenrob/refellips",
-    },
-    "platforms": ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-    "classifiers": [
-        "Development Status :: 4 - Beta",
-        "Environment :: Console",
-        "Intended Audience :: Science/Research",
-        "License :: Public Domain",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Scientific/Engineering :: Chemistry",
-        "Topic :: Scientific/Engineering :: Physics",
-    ],
-    "packages": packages,
-    "include_package_data": True,
-    "setup_requires": [],
-    "python_requires": ">=3.7",
-    "install_requires": ["numpy", "refnx", "pandas", "scipy"],
-    "extras_require": {"all": []},
-    "tests_require": ["pytest"],
-    "cmdclass": {"test": PyTest},
-}
-
-
 def setup_package():
-
     # Rewrite the version file every time
     write_version_py()
     info["version"] = get_version_info()[0]
