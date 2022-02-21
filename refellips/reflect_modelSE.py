@@ -232,6 +232,8 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     AOI: array_like
         the angle of incidence values required for the calculation.
         Units = degrees
+    Wavelength: float
+        Wavelength of light. Units = nm
     layers: np.ndarray
         coefficients required for the calculation, has shape (2 + N, 4),
         where N is the number of layers
@@ -254,7 +256,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
 
 
     """
-    AOI = np.array(AOI)
+    AOI = np.asfarray(AOI)
     AOI = AOI * (np.pi / 180)
 
     layers[0, 2] = 0  # infinate medium cannot have an extinction coeff
@@ -314,6 +316,7 @@ class ReflectModelSE(object):
             delta_offset, name="delta offset"
         )
 
+        # this assumes that you are using Slabs for every single component
         for x in self._structure:
             try:
                 x.sld.model = self
@@ -326,12 +329,10 @@ class ReflectModelSE(object):
 
         Parameters
         ----------
-        x : float or np.ndarray
-            q values for the calculation.
+        aoi : array-like
+            Angles of incidence
         p : refnx.analysis.Parameters, optional
             parameters required to calculate the model
-        x_err : np.ndarray
-            dq resolution smearing values for the dataset being considered.
 
         Returns
         -------
@@ -349,10 +350,8 @@ class ReflectModelSE(object):
 
     @property
     def wav(self):
-        r"""
-        :class:`refnx.analysis.Parameter` - all model values are multiplied by
-        this value before the background is added.
-
+        """
+        Wavelength of light (nm)
         """
         return self._wav
 
@@ -380,7 +379,7 @@ class ReflectModelSE(object):
         Parameters
         ----------
         aoi : float or np.ndarray
-            aoi values for the calculation.
+            Angle of incidence values for the calculation.
         p : refnx.analysis.Parameters, optional
             parameters required to calculate the model
 
@@ -427,6 +426,12 @@ class ReflectModelSE(object):
     @structure.setter
     def structure(self, structure):
         self._structure = structure
+        for x in self._structure:
+            try:
+                x.sld.model = self
+            except AttributeError:
+                print("it appears you are using SLDs instead of RIs")
+
         p = Parameters(name="instrument parameters")
         p.extend([self.wav, self.delOffset])
 

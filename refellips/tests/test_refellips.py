@@ -20,12 +20,12 @@ def test_bare_against_wvase():
     struc = void() | si()
     model = ReflectModelSE(struc, wavelength=658)
 
-    for dat in data:
-        model.wav = dat._current_wav
-        aois = dat.aoi
+    for dat in data.unique_wavelength_data():
+        wav, aois, psi_d, delta_d = dat
+        model.wav = wav
         psi, delta = model(aois)
-        assert_allclose(psi, dat.psi, rtol=0.002)
-        assert_allclose(delta, dat.delta, rtol=0.003)
+        assert_allclose(psi, psi_d, rtol=0.002)
+        assert_allclose(delta, delta_d, rtol=0.003)
 
 
 def test_cauchy_against_wvase():
@@ -87,9 +87,9 @@ def test_refellips_against_wvase3():
         True  # This will be automatically set when analysing data
     )
 
-    for dat in data:
-        model.wav = dat._current_wav
-        aois = dat.aoi
+    for dat in data.unique_wavelength_data():
+        wav, aois, psi_d, delta_d = dat
+        model.wav = wav
         psi, delta = model(aois)
-        assert_allclose(psi, dat.psi, rtol=0.0005)
-        assert_allclose(delta, dat.delta, rtol=0.003)
+        assert_allclose(psi, psi_d, rtol=0.0005)
+        assert_allclose(delta, delta_d, rtol=0.003)

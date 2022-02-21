@@ -128,19 +128,19 @@ class DataSE(object):
         else:
             return "Data1D(data={data!r}," " mask={msk!r})".format(**d)
 
-    def __iter__(self):
-        self._current_wav_idx = 0
-        self._current_wav = self._unique_wavs[self._current_wav_idx]
-        return self
+    def unique_wavelength_data(self):
+        """
+        Generator yielding wavelength, AOI, psi, delta tuples for the unique
+        wavelengths in a dataset (i.e. all the data points for a given
+        wavelength)
 
-    def __next__(self):
-        if self._current_wav_idx < len(self._unique_wavs):
-            self._current_wav = self._unique_wavs[self._current_wav_idx]
-            self.mask = self._wav == self._current_wav
-            self._current_wav_idx += 1
-            return self
-        else:
-            raise StopIteration
+        Returns
+        -------
+        wavelength, AOI, psi, delta
+        """
+        for unique_wav in self._unique_wavs:
+            loc = np.where(self.wav == unique_wav)
+            yield unique_wav, self.aoi[loc], self.psi[loc], self.delta[loc]
 
     @property
     def _unique_wavs(self):
