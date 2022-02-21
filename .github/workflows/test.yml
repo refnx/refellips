@@ -47,8 +47,7 @@ jobs:
         black --check -l80 refellips
 
 
- build_doc:
-
+  build_doc:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
