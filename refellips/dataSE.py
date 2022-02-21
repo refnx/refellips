@@ -6,6 +6,7 @@ A basic representation of a 1D dataset
 
 import numpy as np
 import pandas as pd
+from refnx._lib import possibly_open_file
 
 pd.options.mode.chained_assignment = None
 
@@ -17,6 +18,7 @@ class DataSE(object):
     Parameters
     ----------
     data : str, file-like or tuple of np.ndarray, optional
+        String pointing to a data file.
         Alternatively it is a tuple containing the data from which the dataset
         will be constructed. The tuple should have 4 members.
 
@@ -30,7 +32,7 @@ class DataSE(object):
 
     mask : array-like
         Specifies which data points are (un)masked. Must be broadcastable
-        to the y-data. `Data1D.mask = None` clears the mask. If a mask value
+        to the data. `Data1D.mask = None` clears the mask. If a mask value
         equates to `True`, then the point is included, if a mask value equates
         to `False` it is excluded.
 
@@ -42,7 +44,7 @@ class DataSE(object):
     Attributes
     ----------
     data : tuple of np.ndarray
-        The data, (x, y, y_err, x_err)
+        The data, (wavelength, AOI, psi, delta)
     finite_data : tuple of np.ndarray
         Data points that are finite
     wav : np.ndarray
@@ -94,7 +96,7 @@ class DataSE(object):
             self._delta = data._delta
 
         # If a list or tuple, then assume its in format wavelength, AOI, psi, delta.
-        elif isinstance(data, list) or isinstance(data, tuple):
+        elif isinstance(data, (list, tuple, np.ndarray)):
             self._wav = data[0]
             self._aoi = data[1]
             self._psi = data[2]
@@ -244,7 +246,7 @@ class DataSE(object):
         """
 
         skip_lines = 0
-        with open(f, "r") as text:
+        with possibly_open_file(f, "r") as text:
             for i in range(100):  # check the first 100 lines
                 try:
                     float(text.readline().split(self.delimiter)[0])
@@ -271,9 +273,10 @@ def open_EP4file(fname, reflect_delta=False):
     Open and load in an Accurion EP4 formmated data file.
     Typically a .dat file.
 
-    Note: This file parser has been written for specific Accurion ellipsometers: EP3 and EP4. No
-    work has been done to ensure it is compatable with all Accurion ellipsometers. If
-    you have trouble with this parser contact the maintainers through github.
+    Note: This file parser has been written for specific Accurion ellipsometers
+    EP3 and EP4. No work has been done to ensure it is compatable with all
+    Accurion ellipsometers. If you have trouble with this parser contact the
+    maintainers through github.
 
     Parameters
     ----------
@@ -320,7 +323,9 @@ def open_EP4file(fname, reflect_delta=False):
         del op["psi"]
         del op["delta"]
         name = _make_EP4dname(fname, op)
-        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta, **op))
+        datasets.append(
+            DataSE(data, name=name, reflect_delta=reflect_delta, **op)
+        )
 
     if len(datasets) == 1:
         return datasets[0]
@@ -330,7 +335,8 @@ def open_EP4file(fname, reflect_delta=False):
 
 def _make_EP4dname(name, metadata):
     """
-    Create a helpful name for a data set based on an Accurion EP4 formmated data file.
+    Create a helpful name for a data set based on an Accurion EP4
+    formatted data file.
 
     Parameters
     ----------
@@ -405,7 +411,8 @@ def _loadEP4(df):
         loc_data = False
 
     if loc_data and (
-        len(df["X_pos"].drop_duplicates()) > 1 or len(df["Y_pos"].drop_duplicates()) > 1
+        len(df["X_pos"].drop_duplicates()) > 1
+        or len(df["Y_pos"].drop_duplicates()) > 1
     ):
         print("Treating as multiple locations")
         df = df[["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
@@ -448,14 +455,17 @@ def _loadEP4(df):
     return output
 
 
-def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
+def open_HORIBAfile(
+    fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
+):
     """
-    Opening and loading in a data file created by a Horiba ellipsometer. Data file
-    loaded should be of the Horiba file format .spe.
+    Opening and loading in a data file created by a Horiba ellipsometer. Data
+    file loaded should be of the Horiba file format .spe.
 
     Note: This file parser has been written for a specific ellipsometer, no
-    work has been done to ensure it is compatable with all Horiba ellipsometers.
-    If you have trouble with this parser contact the maintainers through github.
+    work has been done to ensure it is compatable with all Horiba
+    ellipsometers. If you have trouble with this parser contact the maintainers
+    through github.
 
     Parameters
     ----------
@@ -496,7 +506,9 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
             else:
                 if not len(l):
                     MDingest = False
-                    if not len(metadata[MDlabel]):  # there is no metadata for entry
+                    if not len(
+                        metadata[MDlabel]
+                    ):  # there is no metadata for entry
                         metadata[MDlabel] = None  # Set metadata to none
                     elif len(metadata[MDlabel]) == 1:  # there is only one entry
                         metadata[MDlabel] = metadata[MDlabel][

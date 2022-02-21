@@ -1,0 +1,91 @@
+# refellips - Installation and Development Instructions
+
+refellips is a python package for analysis of spectroscopic ellipsometry
+data.
+
+
+--------------
+# Installation
+
+*refellips* has been tested on Python 3.8, 3.9 and 3.10. It requires the *numpy,
+scipy, refnx, pandas* packages to work. Additional features require the
+*pytest* package.
+
+## Installation into a *conda* environment
+refellips is a pure Python package and can be installed via pip:
+
+```
+pip install refellips
+```
+
+-----------------------
+## Development Workflow
+
+These instructions outline the workflow for contributing to refellips development.
+The refellips community welcomes all contributions that will improve the package.
+The following instructions are based on use of a command line *git* client.
+*Git* is a distributed version control program. An example of [how to contribute to the numpy project][numpy-contrib]
+is a useful reference.
+
+### Setting up a local git repository
+  1) Create an account on [github](https://github.com/).
+  2) On the [refellips github][github-refellips] page fork the *refellips* repository to your own github account. Forking means that now you have your own personal repository of the *refellips* code.
+  3) Now we will make a local copy of your personal repository on your local machine:
+  ```
+  # <username> is your github username
+  git clone https://github.com/<username>/refellips.git
+  ```
+  4) Add the *refellips* remote repository, we're going to refer to the remote with the *upstream* name:
+  ```
+  git remote add upstream https://github.com/refnx/refellips.git
+  ```
+  5) List the remote repositories that your local repository knows about:
+  ```
+  git remote -v
+  ```
+
+### Keeping your local and remote repositories up to date
+The main *refellips* repository may be a lot more advanced than your fork, or your local copy, of the git repository.
+  1) To update your repositories you need to fetch the changes from the main *refellips* repository:
+  ```
+  git fetch upstream
+  ```
+  2) Now update the local branch you're on by rebasing against the *refnx* master branch:
+  ```
+  git rebase upstream/master
+  ```
+  3) Push your updated local branch to the remote fork on github. You have to specify the remote branch you're pushing to. Here we push to the *master* branch:
+  ```
+  git push origin master
+  ```
+
+### Adding a feature
+The git repository is automatically on the master branch to start with. However,
+when developing features that you'd like to contribute to the *refnx* project
+you'll need to do it on a feature branch.
+
+  1) Create a feature branch and check it out:
+  ```
+  git branch my_feature_name
+  git checkout my_feature_name
+  ```
+  2) Once you're happy with the changes you've made you should check that the tests still work:
+  ```
+  python setup.py test
+  ```
+  3) Now commit the changes. You'll have to supply a commit message that outlines the changes you made. The commit message should follow the [numpy guidelines][numpy-contib]
+  ```
+  git commit -a
+  ```
+  4) Now you need to push those changes on the *my_feature_branch* branch to *your* fork of the refnx repository on github:
+  ```
+  git push origin my_feature_branch
+  ```
+  5) On the main [refellips][github-refellips] repository you should be able to create a pull request (PR). The PR says that you'd like the *refnx* project to include the changes you made.
+  6) Once the automated tests have passed, and the *refnx* maintainers are happy with the changes you've made then the PR is merged. You can then delete the feature branch on github, and delete your local feature branch:
+  ```
+  git branch -D my_feature_branch
+  ```
+
+   [PyPi]: <https://pypi.python.org/pypi/refnx>
+   [github-refellips]: <https://github.com/refnx/refellips>

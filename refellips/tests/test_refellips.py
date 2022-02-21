@@ -86,7 +86,9 @@ def test_refellips_against_wvase3():
     cauchy = RI(A=1.47, B=0.00495, C=0)
     struc = void() | cauchy(1000) | si()
     model = ReflectModelSE(struc, wavelength=658)
-    model._flip_delta = True  # This will be automatically set when analysing data
+    model._flip_delta = (
+        True  # This will be automatically set when analysing data
+    )
 
     test_arr = []
 

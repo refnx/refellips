@@ -28,4 +28,4 @@ jobs:
 
     - name: lint
       run: |
-        black --check refellips
+        black --check -l80 refellips

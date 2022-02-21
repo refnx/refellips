@@ -310,7 +310,9 @@ class ReflectModelSE(object):
         self._structure = None
         self.structure = structure
 
-        self.DeltaOffset = possibly_create_parameter(delta_offset, name="delta offset")
+        self.DeltaOffset = possibly_create_parameter(
+            delta_offset, name="delta offset"
+        )
 
         for x in self._structure:
             try:
