@@ -1,0 +1,16 @@
+version: 2
+
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+
+build:
+  image: latest
+
+python:
+   version: 3.7
+   install:
+      - requirements: doc/requirements.txt
+      - method: pip
+        path: .
+   system_packages: false
