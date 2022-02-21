@@ -1,0 +1,19 @@
+channels:
+  - conda-forge
+dependencies:
+  - python==3.7
+  - pip:
+    - nbsphinx
+    - jupyter-sphinx
+    - sphinx_rtd_theme
+    - periodictable
+    - pandoc
+    - scipy
+    - numpy
+    - sphinx
+    - pandas
+    - numpydoc
+    - setuptools
+    - cython
+    - jupyter
+    - matplotlib
