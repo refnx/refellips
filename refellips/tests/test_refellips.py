@@ -10,10 +10,10 @@ def test_bare_against_wvase():
     dname = os.path.join(pth, "TestData_bareSI.txt")
     data = DataSE(data=dname)
 
-    _f = os.path.join(pth, "../../materials/silicon.csv")
+    _f = os.path.join(pth, "../materials/silicon.csv")
     si = RI(_f)
 
-    _f = os.path.join(pth, "../../materials/void.csv")
+    _f = os.path.join(pth, "../materials/void.csv")
     void = RI(_f)
 
     struc = void() | si()
@@ -39,10 +39,10 @@ def test_cauchy_against_wvase():
     B = 0.00495
     C = 0
 
-    _f = os.path.join(pth, "../../materials/silicon.csv")
+    _f = os.path.join(pth, "../materials/silicon.csv")
     si = RI(_f)
 
-    _f = os.path.join(pth, "../../materials/void.csv")
+    _f = os.path.join(pth, "../materials/void.csv")
     void = RI(_f)
 
     cauchy = RI(A=A, B=B, C=C)
@@ -77,10 +77,10 @@ def test_refellips_against_wvase3():
     dname = os.path.join(pth, "TestData_cauchy.txt")
     data = DataSE(data=dname)
 
-    _f = os.path.join(pth, "../../materials/silicon.csv")
+    _f = os.path.join(pth, "../materials/silicon.csv")
     si = RI(_f)
 
-    _f = os.path.join(pth, "../../materials/void.csv")
+    _f = os.path.join(pth, "../materials/void.csv")
     void = RI(_f)
 
     cauchy = RI(A=1.47, B=0.00495, C=0)
