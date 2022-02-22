@@ -22,8 +22,8 @@ class DataSE(object):
         Alternatively it is a tuple containing the data from which the dataset
         will be constructed. The tuple should have 4 members.
 
-            - data[0] - Wavelength
-            - data[1] - Angle of incidence
+            - data[0] - Wavelength (nm)
+            - data[1] - Angle of incidence (degree)
             - data[2] - Psi
             - data[3] - Delta
 
@@ -47,10 +47,10 @@ class DataSE(object):
         The data, (wavelength, AOI, psi, delta)
     finite_data : tuple of np.ndarray
         Data points that are finite
-    wav : np.ndarray
-        wavelength
+    wavelength : np.ndarray
+        wavelength (nm)
     AOI : np.ndarray
-        angle of incidence
+        angle of incidence (degree)
     psi : np.ndarray
         psi
     delta : np.ndarray
@@ -73,7 +73,7 @@ class DataSE(object):
 
         self.delimiter = delimiter
         self.metadata = kwds
-        self._wav = np.zeros(0)
+        self._wavelength = np.zeros(0)
         self._aoi = np.zeros(0)
         self._psi = np.zeros(0)
         self._delta = np.zeros(0)
@@ -90,14 +90,14 @@ class DataSE(object):
             self.name = data.name
             self.filename = data.filename
             self.metadata = data.metadata
-            self._wav = data._wav
+            self._wavelength = data._wavelength
             self._aoi = data._aoi
             self._psi = data._psi
             self._delta = data._delta
 
         # If a list or tuple, then assume its in format wavelength, AOI, psi, delta.
         elif isinstance(data, (list, tuple, np.ndarray)):
-            self._wav = data[0]
+            self._wavelength = data[0]
             self._aoi = data[1]
             self._psi = data[2]
             self._delta = data[3]
@@ -108,11 +108,11 @@ class DataSE(object):
             self._delta[dmask] = 360 - self._delta[dmask]
             self._delta_flipped = True
 
-        self.mask = np.ones_like(self._wav, dtype=bool)
+        self.mask = np.ones_like(self._wavelength, dtype=bool)
 
     def __len__(self):
         """Number of unmasked points in the dataset."""
-        return self.wav.size
+        return self.wavelength.size
 
     def __str__(self):
         return "<{0}>, {1} points".format(self.name, len(self))
@@ -138,30 +138,18 @@ class DataSE(object):
         -------
         wavelength, AOI, psi, delta
         """
-        for unique_wav in self._unique_wavs:
-            loc = np.where(self.wav == unique_wav)
+        unique_wavs = np.unique(self.wavelength)
+        for unique_wav in unique_wavs:
+            loc = np.where(self.wavelength == unique_wav)
             yield unique_wav, self.aoi[loc], self.psi[loc], self.delta[loc]
 
     @property
-    def _unique_wavs(self):
-        """
-        List of distinct wavelengths in dataset.
-
-        Returns
-        -------
-        np.array
-            contains wavelengths used by dataset
-
-        """
-        return np.unique(self._wav)
-
-    @property
-    def wav(self):
+    def wavelength(self):
         """Wavelength."""
-        if self._wav.size > 0:
-            return self._wav[self.mask]
+        if self._wavelength.size > 0:
+            return self._wavelength[self.mask]
         else:
-            return self._wav
+            return self._wavelength
 
     @property
     def aoi(self):
@@ -190,7 +178,7 @@ class DataSE(object):
     @property
     def data(self):
         """4-tuple containing the (lambda, AOI, psi, delta) data."""
-        return self.wav, self.aoi, self.psi, self.delta
+        return self.wavelength, self.aoi, self.psi, self.delta
 
     @data.setter
     def data(self, data_tuple):
@@ -208,12 +196,12 @@ class DataSE(object):
         Clears the mask for the dataset, it will need to be reapplied.
 
         """
-        self._wav = np.array(data_tuple[0], dtype=float)
+        self._wavelength = np.array(data_tuple[0], dtype=float)
         self._aoi = np.array(data_tuple[1], dtype=float)
         self._psi = np.array(data_tuple[2], dtype=float)
         self._delta = np.array(data_tuple[3], dtype=float)
 
-        self.mask = np.ones_like(self._wav, dtype=bool)
+        self.mask = np.ones_like(self._wavelength, dtype=bool)
 
     def save(self, f):
         """
@@ -228,7 +216,9 @@ class DataSE(object):
         header = "wavelength\tAOI\tPsi\tDelta"
         np.savetxt(
             f,
-            np.column_stack((self._wav, self._aoi, self._psi, self._delta)),
+            np.column_stack(
+                (self._wavelength, self._aoi, self._psi, self._delta)
+            ),
             delimiter="\t",
             header=header,
         )
@@ -254,7 +244,7 @@ class DataSE(object):
                 except ValueError:
                     skip_lines += 1
 
-        self._wav, self._aoi, self._psi, self._delta = np.loadtxt(
+        self._wavelength, self._aoi, self._psi, self._delta = np.loadtxt(
             f, skiprows=skip_lines, delimiter=self.delimiter, encoding="utf8"
         ).T
 

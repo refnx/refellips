@@ -146,7 +146,7 @@ class ObjectiveSE(BaseObjective):
         **int** the number of points in the dataset.
 
         """
-        return self.data._wav.size
+        return self.data._wavelength.size
 
     def varying_parameters(self):
         """
