@@ -189,8 +189,8 @@ class DataSE(object):
 
     @property
     def data(self):
-        """4-tuple containing the (lambda, AOI, delta, psi) data."""
-        return self.wav, self.aoi, self.delta, self.psi
+        """4-tuple containing the (lambda, AOI, psi, delta) data."""
+        return self.wav, self.aoi, self.psi, self.delta
 
     @data.setter
     def data(self, data_tuple):

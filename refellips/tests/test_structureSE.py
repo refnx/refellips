@@ -31,11 +31,11 @@ def test_RI_from_array():
     B = 0.00495
     C = 0
 
-    wavs = np.arange(1, 101.)
+    wavs = np.arange(1, 101.0)
     ri_in = A + B / ((wavs) ** 2) + C / ((wavs) ** 4)
     ec_in = np.linspace(0.01, 0.2, 100)
 
     _f = RI((wavs, ri_in, ec_in))
     assert_allclose(_f._wav[0], 1000.0)
-    ri = _f.complex(2000.)
+    ri = _f.complex(2000.0)
     assert_allclose(ri, complex(ri_in[1], ec_in[1]))

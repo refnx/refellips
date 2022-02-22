@@ -74,7 +74,9 @@ class RI(Scatterer):
     An RI object can be used to create a Slab:
     """
 
-    def __init__(self, dispersion=None, A=None, B=0, C=0, wavelength=658, name=""):
+    def __init__(
+        self, dispersion=None, A=None, B=0, C=0, wavelength=658, name=""
+    ):
         super(RI, self).__init__(name=name)
         self.A = None
 
@@ -100,8 +102,8 @@ class RI(Scatterer):
                     name = os.path.basename(dispersion).split(".")[0]
 
                 vals = np.loadtxt(
-                        dispersion, skiprows=1, delimiter=",", encoding="utf8"
-                    ).T
+                    dispersion, skiprows=1, delimiter=",", encoding="utf8"
+                ).T
                 self._wav = vals[0]
                 self._RI = vals[1]
                 self._EC = np.zeros_like(self._wav)
@@ -133,7 +135,7 @@ class RI(Scatterer):
         return self._parameters
 
     def __repr__(self):
-        ri = complex(self)
+        ri = self.complex(None)
         return str(f"n: {ri.real}, k: {ri.imag}")
 
     def __complex__(self):
@@ -165,7 +167,7 @@ class RI(Scatterer):
             # wavelength range covered by the data file.
             ri_real = np.interp(wav, self._wav, self._RI)
             ri_imag = np.interp(wav, self._wav, self._EC)
-            return ri_real + 1J*ri_imag
+            return ri_real + 1j * ri_imag
 
         elif self.A is not None:
             # TODO query about the cauchy value calculation
@@ -174,6 +176,6 @@ class RI(Scatterer):
                 + (self.B.value * 1000**2) / (wav**2)
                 + (self.C.value * 1000**4) / (wav**4)
             )
-            return real + 1J*0.0
+            return real + 1j * 0.0
         else:
-            return self._RI + 1J*self._EC
+            return self._RI + 1j * self._EC
