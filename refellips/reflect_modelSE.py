@@ -316,13 +316,6 @@ class ReflectModelSE(object):
             delta_offset, name="delta offset"
         )
 
-        # this assumes that you are using Slabs for every single component
-        for x in self._structure:
-            try:
-                x.sld.model = self
-            except AttributeError:
-                print("it appears you are using SLDs instead of RIs")
-
     def __call__(self, aoi, p=None):
         r"""
         Calculate the generative model

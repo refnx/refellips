@@ -47,14 +47,11 @@ class RI(Scatterer):
     """
     Object representing a materials wavelength-dependent refractive index.
 
-    A concern is how it needs to be linked to a model. This is to get around
-    a major rewrite of refnx, but isn't the most elegant system.
-
-    Another issue is that optical parameters are supplied in units of micro
+    An issue is that optical parameters are supplied in units of micro
     meters ('cause thats what seems to be used in refractive index repos and
     cauchy models), the wavelength of the incident radiation is supplied in
     nanometers (thats typical) and the fitting is done in angstroms. Very
-    unpleasent.
+    unpleasant.
 
     Parameters
     ----------
@@ -83,6 +80,7 @@ class RI(Scatterer):
             name = os.path.basename(value).split(".")[0]
 
         super(RI, self).__init__(name=name)
+        self.A = None
 
         # attribute required by Scatterer for energy dispersive calculations
         # to work
@@ -90,6 +88,7 @@ class RI(Scatterer):
         self.wavelength = wavelength
 
         # _wav is only set if a wavelength dependent dispersion curve is loaded
+        # assumed to be in nm
         self._wav = None
 
         assert np.logical_xor(
@@ -120,6 +119,7 @@ class RI(Scatterer):
                 # wavelength, RI, extinction coef.
                 # wavelength assumed to be in *nm*
                 self._wav, self._RI, self._EC = value
+                self._wav *= 1000
             else:
                 raise TypeError("format not recognised")
         else:
@@ -134,6 +134,9 @@ class RI(Scatterer):
             self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
             self.C = possibly_create_parameter(C, name=f"{name} - cauchy C")
             self._parameters.extend([self.A, self.B, self.C])
+
+        # TODO test whether self.A or self._wav are None. If so, then raise
+        # Exception
 
     @property
     def parameters(self):
