@@ -55,8 +55,21 @@ class RI(Scatterer):
 
     Parameters
     ----------
-    value : str, tuple
-        If a string then this is assumpoints to a dispersion curve file
+    dispersion : str, {tuple, np.ndarray)
+        If a string then a dispersion curve will be loaded from a file that
+        the string points to. The file is assumed to be of CSV format, with the
+        first column holding the wavelength (in *microns*), with the second
+        column specifying the refractive index. An optional third column can be
+        present that should hold the extinction coefficient.
+
+        If  `dispersion` has length 2 (float, float), then dispersion[0] points
+        to the refractive index of the material and dispersion[1] points to the
+        extinction coefficient. This refractive index is assumed to be
+        wavelength independent.
+
+        If `dispersion` has length 3, then dispersion[0], dispersion[1],
+        dispersion[2] are assumed to hold arrays specifying the wavelength (in
+        *microns*), refractive index, and extinction coefficient.
     A : float or parameter
         Cauchy parameter A. If not none RI will use the cauchy model.
         Default None.
@@ -134,7 +147,7 @@ class RI(Scatterer):
     def parameters(self):
         return self._parameters
 
-    def __repr__(self):
+    def __str__(self):
         ri = self.complex(None)
         return str(f"n: {ri.real}, k: {ri.imag}")
 
@@ -170,7 +183,6 @@ class RI(Scatterer):
             return ri_real + 1j * ri_imag
 
         elif self.A is not None:
-            # TODO query about the cauchy value calculation
             real = (
                 self.A.value
                 + (self.B.value * 1000**2) / (wav**2)

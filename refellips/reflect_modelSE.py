@@ -282,7 +282,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     return psi * (180 / np.pi), delta * (180 / np.pi) + delta_offset
 
 
-class ReflectModelSE(object):
+class ReflectModelSE:
     r"""
     Parameters
     ----------
