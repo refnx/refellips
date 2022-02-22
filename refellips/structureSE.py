@@ -55,7 +55,8 @@ class RI(Scatterer):
 
     Parameters
     ----------
-    value : tuple, string
+    value : str, tuple
+        If a string then this is assumpoints to a dispersion curve file
     A : float or parameter
         Cauchy parameter A. If not none RI will use the cauchy model.
         Default None.
@@ -73,12 +74,7 @@ class RI(Scatterer):
     An RI object can be used to create a Slab:
     """
 
-    def __init__(self, value=None, A=None, B=0, C=0, wavelength=658, name=""):
-        if (
-            type(value) is str and name == ""
-        ):  # if there is no name get it from the path
-            name = os.path.basename(value).split(".")[0]
-
+    def __init__(self, dispersion=None, A=None, B=0, C=0, wavelength=658, name=""):
         super(RI, self).__init__(name=name)
         self.A = None
 
@@ -90,42 +86,39 @@ class RI(Scatterer):
         # _wav is only set if a wavelength dependent dispersion curve is loaded
         # assumed to be in nm
         self._wav = None
+        self._RI = None
+        self._EC = None
 
         assert np.logical_xor(
-            value is None, A is None
+            dispersion is None, A is None
         ), "Supply either values or cauchy parameters"
 
-        if value is not None:
-            if type(value) is str:
-                try:
-                    self._wav, self._RI, self._EC = np.loadtxt(
-                        value, skiprows=1, delimiter=",", encoding="utf8"
+        if dispersion is not None:
+            if type(dispersion) is str:
+                if not len(name):
+                    # if there is no name get it from the path
+                    name = os.path.basename(dispersion).split(".")[0]
+
+                vals = np.loadtxt(
+                        dispersion, skiprows=1, delimiter=",", encoding="utf8"
                     ).T
-                except ValueError:
-                    self._wav, self._RI = np.loadtxt(
-                        value,
-                        skiprows=1,
-                        delimiter=",",
-                        usecols=[0, 1],
-                        encoding="utf8",
-                    ).T
-                    self._EC = np.zeros_like(self._wav)
+                self._wav = vals[0]
+                self._RI = vals[1]
+                self._EC = np.zeros_like(self._wav)
+                if len(vals) == 3:
+                    self._EC = vals[2]
                 # convert wavelength from um to nm
                 self._wav = self._wav * 1000
-            elif len(value) == 2:
-                self._RI, self._EC = value
-            elif len(value) == 3:
+            elif len(dispersion) == 2:
+                self._RI, self._EC = dispersion
+            elif len(dispersion) == 3:
                 # this is if you have an (3, N) array or tuple specifying
                 # wavelength, RI, extinction coef.
                 # wavelength assumed to be in *nm*
-                self._wav, self._RI, self._EC = value
+                self._wav, self._RI, self._EC = dispersion
                 self._wav *= 1000
             else:
                 raise TypeError("format not recognised")
-        else:
-            self.wavelength = wavelength
-            self._RI = None
-            self._EC = None
 
         self._parameters = Parameters(name=name)
 
@@ -134,9 +127,6 @@ class RI(Scatterer):
             self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
             self.C = possibly_create_parameter(C, name=f"{name} - cauchy C")
             self._parameters.extend([self.A, self.B, self.C])
-
-        # TODO test whether self.A or self._wav are None. If so, then raise
-        # Exception
 
     @property
     def parameters(self):
@@ -186,4 +176,4 @@ class RI(Scatterer):
             )
             return real + 1J*0.0
         else:
-            return complex(self._RI, self._EC)
+            return self._RI + 1J*self._EC
