@@ -66,38 +66,33 @@ def plot_ellipsdata(
     assert xaxis == "aoi" or xaxis == "wavelength", "xaxis must be 'aoi' or 'wavelength"
 
     axt = ax.twinx()
-    data.mask = np.ones_like(data.mask, dtype=bool)
 
     if xaxis == "aoi":
-        unique_wavs = np.unique(data.wav)
+        unique_wavs = np.unique(data.wavelength)
         aois = np.linspace(np.min(data.aoi) - 5, np.max(data.aoi) + 5)
         x = data.aoi
         xlab = "AOI, °"
 
         if model != None:
             for wav in unique_wavs:
-                model.wav = wav
-                psis, deltas = model(aois)
+                psis, deltas = model(np.c_[np.ones_like(aois) * wav, aois])
                 ax.plot(aois, psis, color="r")
                 axt.plot(aois, deltas, color="b")
 
     elif xaxis == "wavelength":
         unique_aois = np.unique(data.aoi)
-        wavs = np.linspace(np.min(data.wav) - 50, np.max(data.wav) + 50)
-        x = data.wav
+        wavs = np.linspace(np.min(data.wavelength) - 50, np.max(data.wavelength) + 50)
+        x = data.wavelength
 
         if model != None:
-            for u in unique_aois:
-                psis = []
-                deltas = []
-                for wav in wavs:
-                    model.wav = wav
-                    psi, delta = model([u])
-                    psis.append(psi)
-                    deltas.append(delta)
+            print(x)
+            for idx, wav in enumerate(np.unique(data.wavelength)):
+                wavelength, aoi, d_psi, d_delta = list(data.unique_wavelength_data())[idx]
 
-            ax.plot(wavs, psis, color="r")
-            axt.plot(wavs, deltas, color="b")
+                psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
+                ax.plot(np.ones_like(psi) * wavelength, psi, color='r')
+                axt.plot(np.ones_like(delta) * wavelength, delta, color='b')
+
             xlab = "Wavelength, nm"
 
     p = ax.scatter(x, data.psi, color="r")
@@ -147,12 +142,10 @@ def plot_structure(
             structure == None
         ), "you must supply either an objective or structure, not both"
         structure = objective.model.structure
-        wavelengths = np.unique(objective.data.wav)
-        model = objective.model
+        wavelengths = np.unique(objective.data.wavelength)
     else:
         assert structure != None, "you must supply either an objective or structure"
         wavelengths = [658]
-        model = False
 
     if len(wavelengths) > 1:
         colors = plt.cm.viridis(np.linspace(0, 1, len(wavelengths)))
@@ -164,12 +157,6 @@ def plot_structure(
     structure.reverse_structure = reverse_structure
 
     for wav, col in zip(wavelengths, colors):
-        for x in structure:
-            if model:
-                model.wav = wav
-            else:
-                x.sld.set_wav = wav
-
         ax.plot(*structure.sld_profile(), color=col, alpha=alpha, label=f"{wav} nm")
 
     structure.reverse_structure = False
