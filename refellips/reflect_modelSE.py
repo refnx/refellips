@@ -237,15 +237,15 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     layers: np.ndarray
         coefficients required for the calculation, has shape (2 + N, 4),
         where N is the number of layers
-        layers[0, 1] - refractive index of fronting (/1e-6 Angstrom**-2)
-        layers[0, 2] - extinction coefficent of fronting (/1e-6 Angstrom**-2)
+        layers[0, 1] - refractive index of fronting
+        layers[0, 2] - extinction coefficent of fronting
         layers[N, 0] - thickness of layer N
-        layers[N, 1] - refractive index of layer N (/1e-6 Angstrom**-2)
-        layers[N, 2] - extinction coefficent of layer N (/1e-6 Angstrom**-2)
-        layers[N, 3] - roughness between layer N-1/N
-        layers[-1, 1] - refractive index of backing (/1e-6 Angstrom**-2)
-        layers[-1, 2] - extinction coefficent of backing (/1e-6 Angstrom**-2)
-        layers[-1, 3] - roughness between backing and last layer
+        layers[N, 1] - refractive index of layer N
+        layers[N, 2] - extinction coefficent of layer N
+        layers[N, 3] - roughness between layer N-1/N (IGNORED!)
+        layers[-1, 1] - refractive index of backing
+        layers[-1, 2] - extinction coefficent of backing
+        layers[-1, 3] - roughness between backing and last layer (IGNORED!)
 
     Returns
     -------
