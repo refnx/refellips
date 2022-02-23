@@ -146,7 +146,7 @@ class ObjectiveSE(BaseObjective):
         **int** the number of points in the dataset.
 
         """
-        return self.data._wav.size
+        return self.data._wavelength.size
 
     def varying_parameters(self):
         """
@@ -179,17 +179,12 @@ class ObjectiveSE(BaseObjective):
         """
 
         self.setp(pvals)
-        res = []
-        for data in self.data.unique_wavelength_data():
-            wav, aoi, psi_d, delta_d = data
 
-            self.model.wav = wav
+        wavelength, aoi, psi_d, delta_d = self.data.data
+        wavelength_aoi = np.c_[wavelength, aoi]
 
-            psi, delta = self.model(aoi)
-            res.append(psi_d - psi)
-            res.append(delta_d - delta)
-
-        return np.ravel(res)
+        psi, delta = self.model(wavelength_aoi)
+        return np.r_[psi - psi_d, delta - delta_d]
 
     def chisqr(self, pvals=None):
         """

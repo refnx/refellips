@@ -237,15 +237,15 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     layers: np.ndarray
         coefficients required for the calculation, has shape (2 + N, 4),
         where N is the number of layers
-        layers[0, 1] - refractive index of fronting (/1e-6 Angstrom**-2)
-        layers[0, 2] - extinction coefficent of fronting (/1e-6 Angstrom**-2)
+        layers[0, 1] - refractive index of fronting
+        layers[0, 2] - extinction coefficent of fronting
         layers[N, 0] - thickness of layer N
-        layers[N, 1] - refractive index of layer N (/1e-6 Angstrom**-2)
-        layers[N, 2] - extinction coefficent of layer N (/1e-6 Angstrom**-2)
-        layers[N, 3] - roughness between layer N-1/N
-        layers[-1, 1] - refractive index of backing (/1e-6 Angstrom**-2)
-        layers[-1, 2] - extinction coefficent of backing (/1e-6 Angstrom**-2)
-        layers[-1, 3] - roughness between backing and last layer
+        layers[N, 1] - refractive index of layer N
+        layers[N, 2] - extinction coefficent of layer N
+        layers[N, 3] - roughness between layer N-1/N (IGNORED!)
+        layers[-1, 1] - refractive index of backing
+        layers[-1, 2] - extinction coefficent of backing
+        layers[-1, 3] - roughness between backing and last layer (IGNORED!)
 
     Returns
     -------
@@ -274,7 +274,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     delta = np.angle(1 / (-rp / rs)) + np.pi
 
     if reflect_delta:
-        # Different ellipsometeres / modelling software have different
+        # Different ellipsometers / modelling software have different
         # conventions for what to do with Delta's above 180. WVASE appears to
         # reflect Delta around 180, which is what we have attempted to replicate.
         delta[delta > np.pi] = 2 * np.pi - delta[delta > np.pi]
@@ -282,7 +282,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
     return psi * (180 / np.pi), delta * (180 / np.pi) + delta_offset
 
 
-class ReflectModelSE(object):
+class ReflectModelSE:
     r"""
     Parameters
     ----------
@@ -295,7 +295,6 @@ class ReflectModelSE(object):
     def __init__(
         self,
         structure,
-        wavelength,
         delta_offset=0,
         name=None,
     ):
@@ -307,8 +306,6 @@ class ReflectModelSE(object):
         # to make it more like a refnx.analysis.Model
         self.fitfunc = None
 
-        self._wav = possibly_create_parameter(wavelength, name="wavelength")
-
         self._structure = None
         self.structure = structure
 
@@ -316,48 +313,30 @@ class ReflectModelSE(object):
             delta_offset, name="delta offset"
         )
 
-        # this assumes that you are using Slabs for every single component
-        for x in self._structure:
-            try:
-                x.sld.model = self
-            except AttributeError:
-                print("it appears you are using SLDs instead of RIs")
-
-    def __call__(self, aoi, p=None):
+    def __call__(self, wavelength_aoi, p=None):
         r"""
         Calculate the generative model
 
         Parameters
         ----------
-        aoi : array-like
-            Angles of incidence
+        wavelength_aoi : array-like
+            An array of shape (N, 2) corresponding to the wavelengths (nm) and
+            angle of incidences (deg) the ellipsometric measurements were
+            performed at.
         p : refnx.analysis.Parameters, optional
             parameters required to calculate the model
 
         Returns
         -------
-        reflectivity : np.ndarray
-            Calculated reflectivity
+        psi, delta : np.ndarray
         """
-        return self.model(aoi, p=p)
+        return self.model(wavelength_aoi, p=p)
 
     def __repr__(self):
         return (
             f"ReflectModel({self._structure!r}, name={self.name!r},"
-            f" wavelength={self.wav!r},"
             f" delta_offset = {self.delOffset!r} "
         )
-
-    @property
-    def wav(self):
-        """
-        Wavelength of light (nm)
-        """
-        return self._wav
-
-    @wav.setter
-    def wav(self, value):
-        self._wav.value = value
 
     @property
     def delOffset(self):
@@ -372,14 +351,16 @@ class ReflectModelSE(object):
     def delOffset(self, value):
         self.DeltaOffset.value = value
 
-    def model(self, aoi, p=None):
+    def model(self, wavelength_aoi, p=None):
         r"""
-        Calculate the reflectivity of this model
+        Calculate the ellipsometric values (psi, delta) of this model
 
         Parameters
         ----------
-        aoi : float or np.ndarray
-            Angle of incidence values for the calculation.
+        wavelength_aoi : array-like
+            An array of shape (N, 2) corresponding to the wavelengths (nm) and
+            angle of incidences (deg) the ellipsometric measurements were
+            performed at.
         p : refnx.analysis.Parameters, optional
             parameters required to calculate the model
 
@@ -392,13 +373,26 @@ class ReflectModelSE(object):
         if p is not None:
             self.parameters.pvals = np.array(p)
 
-        return Delta_Psi_TMM(
-            AOI=aoi,
-            layers=self.structure.slabs()[..., :4],
-            wavelength=self.wav.value,
-            delta_offset=self.delOffset.value,
-            reflect_delta=self._flip_delta,
-        )
+        wavelength, aois = wavelength_aoi.T
+        psi = np.zeros_like(wavelength)
+        delta = np.zeros_like(wavelength)
+
+        unique_wavelengths = np.unique(wavelength)
+        for wav in unique_wavelengths:
+            idx = np.where(wavelength == wav)
+            aoi = aois[idx]
+            self.structure.wavelength = wav
+            _psi, _delta = Delta_Psi_TMM(
+                AOI=aoi,
+                layers=self.structure.slabs()[..., :4],
+                wavelength=wav,
+                delta_offset=self.delOffset.value,
+                reflect_delta=self._flip_delta,
+            )
+            psi[idx] = _psi
+            delta[idx] = _delta
+
+        return psi, delta
 
     def logp(self):
         r"""
@@ -426,14 +420,9 @@ class ReflectModelSE(object):
     @structure.setter
     def structure(self, structure):
         self._structure = structure
-        for x in self._structure:
-            try:
-                x.sld.model = self
-            except AttributeError:
-                print("it appears you are using SLDs instead of RIs")
 
         p = Parameters(name="instrument parameters")
-        p.extend([self.wav, self.delOffset])
+        p.extend([self.delOffset])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
