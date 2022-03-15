@@ -47,8 +47,8 @@ class RI(Scatterer):
     """
     Object representing a materials wavelength-dependent refractive index.
 
-    An issue is that optical parameters are supplied in units of micro
-    meters ('cause thats what seems to be used in refractive index repos and
+    An issue is that optical parameters are supplied in units of micrometers
+    ('cause thats what seems to be used in refractive index repos and
     cauchy models), the wavelength of the incident radiation is supplied in
     nanometers (thats typical) and the fitting is done in angstroms. Very
     unpleasant.
@@ -84,7 +84,7 @@ class RI(Scatterer):
 
     Notes
     -----
-    An RI object can be used to create a Slab:
+    An RI object can be used to create a Slab
     """
 
     def __init__(
