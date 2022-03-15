@@ -192,11 +192,6 @@ class RI(Scatterer):
         else:
             return self._RI + 1j * self._EC
 
-    def __or__(self, other):
-        # c = self | other
-        slab = self()
-        return slab | other
-
     def __call__(self, thick=0, rough=0, vfsolv=0):
         """
         Create a :class:`SlabSE`.
