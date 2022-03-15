@@ -1,6 +1,13 @@
 import numpy as np
 import os.path
-from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE, SlabSE, StructureSE
+from refellips import (
+    RI,
+    DataSE,
+    ReflectModelSE,
+    ObjectiveSE,
+    SlabSE,
+    StructureSE,
+)
 from numpy.testing import assert_allclose
 
 

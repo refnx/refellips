@@ -311,9 +311,10 @@ class StructureSE(Structure):
     Successive Components are added to the Structure to construct the
     interface.
     """
+
     # the only reason to have this class is to have the correct overall_sld
     # method
-    def __init__(self, *args, ema='linear', **kwds):
+    def __init__(self, *args, ema="linear", **kwds):
         super().__init__(*args, **kwds)
         self.ema = ema
 
@@ -384,7 +385,7 @@ class StructureSE(Structure):
         return overall_RI(slabs, solv, ema=self.ema)
 
 
-def overall_RI(slabs, solvent, ema='linear'):
+def overall_RI(slabs, solvent, ema="linear"):
     """
     Calculates the overall refractive index of the material and solvent RI
     in a layer.
@@ -403,8 +404,8 @@ def overall_RI(slabs, solvent, ema='linear'):
     averaged_slabs : np.ndarray
         the averaged slabs.
     """
-    if ema == 'linear':
-        slabs[..., 1:3] = slabs[..., 1:3]**2
+    if ema == "linear":
+        slabs[..., 1:3] = slabs[..., 1:3] ** 2
         slabs[..., 1:3] *= (1 - slabs[..., 4])[..., np.newaxis]
 
         slabs[..., 1] += solvent.real**2 * slabs[..., 4]
