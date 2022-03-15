@@ -1,4 +1,4 @@
-from .structureSE import RI
+from .structureSE import RI, StructureSE, SlabSE
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE
 from .objectiveSE import ObjectiveSE

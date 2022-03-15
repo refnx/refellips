@@ -65,6 +65,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import numpy as np
 from numpy.lib.scimath import arcsin
+from refellips import StructureSE
 
 EPSILON = np.finfo(np.float64).eps
 
@@ -298,6 +299,9 @@ class ReflectModelSE:
         delta_offset=0,
         name=None,
     ):
+        if not isinstance(structure, StructureSE):
+            raise ValueError("structure must be a StructureSE instance")
+
         self.name = name
         self.DeltaOffset = delta_offset
         self._parameters = None
@@ -419,6 +423,9 @@ class ReflectModelSE:
 
     @structure.setter
     def structure(self, structure):
+        if not isinstance(structure, StructureSE):
+            raise ValueError("structure must be a StructureSE instance")
+
         self._structure = structure
 
         p = Parameters(name="instrument parameters")

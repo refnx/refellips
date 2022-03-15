@@ -1,6 +1,6 @@
 import numpy as np
 import os.path
-from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE
+from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE, SlabSE, StructureSE
 from numpy.testing import assert_allclose
 
 
@@ -18,6 +18,9 @@ def test_bare_against_wvase():
     void = RI(_f)
 
     struc = void() | si()
+    assert isinstance(struc[0], SlabSE)
+    assert isinstance(struc, StructureSE)
+
     model = ReflectModelSE(struc)
 
     wav, aois, psi_d, delta_d = data.data
@@ -45,6 +48,8 @@ def test_refellips_against_wvase3():
 
     cauchy = RI(A=1.47, B=0.00495, C=0)
     struc = void() | cauchy(1000) | si()
+    assert isinstance(struc, StructureSE)
+
     model = ReflectModelSE(struc)
     model._flip_delta = True
 
