@@ -37,6 +37,8 @@ def test_bare_against_wvase():
     assert_allclose(psi, psi_d, rtol=0.002)
     assert_allclose(delta, delta_d, rtol=0.003)
 
+    _ = struc.ri_profile()
+
 
 def test_refellips_against_wvase3():
     # Three layer stack(cauchy & from file) compared to wvase
