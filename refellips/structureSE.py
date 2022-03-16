@@ -237,8 +237,8 @@ class RI(ScattererSE):
         elif self.A is not None:
             real = (
                 self.A.value
-                + (self.B.value * 1000 ** 2) / (wav ** 2)
-                + (self.C.value * 1000 ** 4) / (wav ** 4)
+                + (self.B.value * 1000**2) / (wav**2)
+                + (self.C.value * 1000**4) / (wav**4)
             )
             return real + 1j * 0.0
         else:
@@ -833,17 +833,17 @@ def overall_RI(slabs, solvent, ema="linear"):
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
         slabs[..., 1:3] *= (1 - vf)[..., np.newaxis]
 
-        slabs[..., 1] += solvent.real ** 2 * vf
-        slabs[..., 2] += solvent.imag ** 2 * vf
+        slabs[..., 1] += solvent.real**2 * vf
+        slabs[..., 2] += solvent.imag**2 * vf
     elif ema_method == "maxwell-garnett":
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
 
-        top_r = 2 * (1 - vf) * slabs[..., 1] + (1 + 2 * vf) * solvent.real ** 2
-        bottom_r = (2 + vf) * slabs[..., 1] + (1 - vf) * solvent.real ** 2
+        top_r = 2 * (1 - vf) * slabs[..., 1] + (1 + 2 * vf) * solvent.real**2
+        bottom_r = (2 + vf) * slabs[..., 1] + (1 - vf) * solvent.real**2
         slabs[..., 1] *= top_r / bottom_r
 
-        top_r = 2 * (1 - vf) * slabs[..., 2] + (1 + 2 * vf) * solvent.imag ** 2
-        bottom_r = (2 + vf) * slabs[..., 2] + (1 - vf) * solvent.imag ** 2
+        top_r = 2 * (1 - vf) * slabs[..., 2] + (1 + 2 * vf) * solvent.imag**2
+        bottom_r = (2 + vf) * slabs[..., 2] + (1 - vf) * solvent.imag**2
         slabs[..., 2] *= top_r / bottom_r
     else:
         raise RuntimeError("No other method of mixing is known")
