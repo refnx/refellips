@@ -639,7 +639,7 @@ class StructureSE(Structure):
         Returns
         -------
         ri : float
-            Scattering length density / 1e-6 Angstrom**-2
+            refractive index
 
         Notes
         -----
