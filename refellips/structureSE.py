@@ -60,14 +60,26 @@ class ScattererSE(Scatterer):
     Inherited from refnx.reflect.structure.Scatterer
     """
 
-    def __init__(self, name=""):
+    def __init__(self, name="", wavelength=None):
         self.name = name
-        # by default energy dispersive scatterers for ellipsometry are energy dispersive
+        # by default energy dispersive scatterers for ellipsometry are energy
+        # dispersive
         self.dispersive = True
+        self.wavelength = wavelength
 
     def __str__(self):
         ri = complex(self)
-        return "RI = {0}".format(ri)
+        return f"n: {ri.real}, k: {ri.imag}"
+
+    def __complex__(self):
+        """
+        The refractive index and extinction coefficient
+        """
+        return self.complex(None)
+
+    def complex(self, wavelength):
+        raise NotImplementedError(
+            "The complex method is not implemented for this subclass")
 
     def __call__(self, thick=0, rough=0, vfsolv=0):
         """
@@ -122,13 +134,6 @@ class RI(ScattererSE):
         If `dispersion` has length 3, then dispersion[0], dispersion[1],
         dispersion[2] are assumed to hold arrays specifying the wavelength (in
         *microns*), refractive index, and extinction coefficient.
-    A : float or parameter
-        Cauchy parameter A. If not none RI will use the cauchy model.
-        Default None.
-    B : float or parameter
-        Cauchy parameter B in um^2. Default 0.
-    C : float or parameter
-        Cauchy parameter C in um^4. Default 0.
     wavelength : float
         default wavelength for calculation (nm)
     name : str, optional
@@ -140,15 +145,9 @@ class RI(ScattererSE):
     """
 
     def __init__(
-        self, dispersion=None, A=None, B=0, C=0, wavelength=658, name=""
+        self, dispersion=None, wavelength=658, name=""
     ):
-        super(RI, self).__init__(name=name)
-        self.A = None
-
-        # attribute required by Scatterer for energy dispersive calculations
-        # to work
-        self.dispersive = True
-        self.wavelength = wavelength
+        super(RI, self).__init__(name=name, wavelength=wavelength)
 
         # _wav is only set if a wavelength dependent dispersion curve is loaded
         # assumed to be in nm
@@ -156,9 +155,8 @@ class RI(ScattererSE):
         self._RI = None
         self._EC = None
 
-        assert np.logical_xor(
-            dispersion is None, A is None
-        ), "Supply either values or cauchy parameters"
+        if dispersion is None:
+            raise RuntimeError("dispersion must be specified")
 
         if dispersion is not None:
             if type(dispersion) is str:
@@ -187,27 +185,9 @@ class RI(ScattererSE):
             else:
                 raise TypeError("format not recognised")
 
-        self._parameters = Parameters(name=name)
-
-        if A is not None:
-            self.A = possibly_create_parameter(A, name=f"{name} - cauchy A")
-            self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
-            self.C = possibly_create_parameter(C, name=f"{name} - cauchy C")
-            self._parameters.extend([self.A, self.B, self.C])
-
     @property
     def parameters(self):
-        return self._parameters
-
-    def __str__(self):
-        ri = self.complex(None)
-        return str(f"n: {ri.real}, k: {ri.imag}")
-
-    def __complex__(self):
-        """
-        The refractive index and extinction coefficient
-        """
-        return self.complex(None)
+        return Parameters(name=self.name)
 
     def complex(self, wavelength):
         """
@@ -244,26 +224,72 @@ class RI(ScattererSE):
         else:
             return self._RI + 1j * self._EC
 
-    def __call__(self, thick=0, rough=0, vfsolv=0):
+
+class Cauchy(ScattererSE):
+    """
+    Cauchy model for wavelength-dependent refractive index.
+
+    Optical parameters are supplied in units of micrometers
+    ('cause thats what seems to be used in refractive index repos and
+    cauchy models), the wavelength of the incident radiation is supplied in
+    nanometers (that's typical) and the fitting is done in angstroms.
+
+    The refractive index is calculated as:
+    ``A + (B * 1000**2) / (wav**2) + (C * 1000**4) / (wav**4)``
+
+    where the factors of 1000 convert from microns to nm.
+
+
+    Parameters
+    ----------
+    A : float or parameter
+        Cauchy parameter A.
+    B : float or parameter
+        Cauchy parameter B in um^2. Default 0.
+    C : float or parameter
+        Cauchy parameter C in um^4. Default 0.
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+    """
+    def __init__(
+        self, A, B=0, C=0, wavelength=658, name=""
+    ):
+        super().__init__(name=name, wavelength=wavelength)
+        self.A = possibly_create_parameter(A, name=f"{name} - cauchy A")
+        self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
+        self.C = possibly_create_parameter(C, name=f"{name} - cauchy C")
+        self._parameters = Parameters(name=name)
+        self._parameters.extend([self.A, self.B, self.C])
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def complex(self, wavelength):
         """
-        Create a :class:`SlabSE`.
+        Calculate a complex RI
 
         Parameters
         ----------
-        thick: refnx.analysis.Parameter or float
-            Thickness of slab in Angstrom
-        rough: refnx.analysis.Parameter or float
-            Roughness of slab in Angstrom
-        vfsolv: refnx.analysis.Parameter or float
-            Volume fraction of water in slab
+        wavelength : float
+            wavelength of light in nm
 
         Returns
         -------
-        slab : SlabSE
-            The newly made Slab.
-
+        RI : complex
+            refractive index and extinction coefficient
         """
-        return SlabSE(thick, self, rough, name=self.name, vfsolv=vfsolv)
+        # just in case wavelength is None
+        wav = wavelength or self.wavelength
+
+        real = (
+            self.A.value
+            + (self.B.value * 1000**2) / (wav**2)
+            + (self.C.value * 1000**4) / (wav**4)
+        )
+        return real + 1j * 0.0
 
 
 class ComponentSE(Component):

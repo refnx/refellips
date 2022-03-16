@@ -2,6 +2,7 @@ import numpy as np
 import os.path
 from refellips import (
     RI,
+    Cauchy,
     DataSE,
     ReflectModelSE,
     ObjectiveSE,
@@ -55,7 +56,7 @@ def test_refellips_against_wvase3():
     _f = os.path.join(pth, "../materials/void.csv")
     void = RI(_f)
 
-    cauchy = RI(A=1.47, B=0.00495, C=0)
+    cauchy = Cauchy(A=1.47, B=0.00495, C=0)
     struc = void() | cauchy(1000) | si()
     assert isinstance(struc, StructureSE)
 

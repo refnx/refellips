@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import refellips
-from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE
+from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE, Cauchy
 
 
 def test_cauchy_against_wvase():
@@ -14,7 +14,7 @@ def test_cauchy_against_wvase():
     B = 0.00495
     C = 0
 
-    cauchy = RI(A=A, B=B, C=C)
+    cauchy = Cauchy(A=A, B=B, C=C)
 
     pth = os.path.dirname(os.path.abspath(__file__))
     _f = pjoin(pth, "Cauchynk_fromWVASE.txt")
