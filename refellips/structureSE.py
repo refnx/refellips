@@ -79,7 +79,8 @@ class ScattererSE(Scatterer):
 
     def complex(self, wavelength):
         raise NotImplementedError(
-            "The complex method is not implemented for this subclass")
+            "The complex method is not implemented for this subclass"
+        )
 
     def __call__(self, thick=0, rough=0, vfsolv=0):
         """
@@ -144,9 +145,7 @@ class RI(ScattererSE):
     An RI object can be used to create a Slab
     """
 
-    def __init__(
-        self, dispersion=None, wavelength=658, name=""
-    ):
+    def __init__(self, dispersion=None, wavelength=658, name=""):
         super(RI, self).__init__(name=name, wavelength=wavelength)
 
         # _wav is only set if a wavelength dependent dispersion curve is loaded
@@ -253,9 +252,8 @@ class Cauchy(ScattererSE):
     name : str, optional
         Name of material.
     """
-    def __init__(
-        self, A, B=0, C=0, wavelength=658, name=""
-    ):
+
+    def __init__(self, A, B=0, C=0, wavelength=658, name=""):
         super().__init__(name=name, wavelength=wavelength)
         self.A = possibly_create_parameter(A, name=f"{name} - cauchy A")
         self.B = possibly_create_parameter(B, name=f"{name} - cauchy B")
