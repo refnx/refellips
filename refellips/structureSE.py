@@ -120,7 +120,7 @@ class RI(ScattererSE):
 
     Parameters
     ----------
-    dispersion : str, {tuple, np.ndarray)
+    dispersion : {str, tuple, np.ndarray)
         If a string then a dispersion curve will be loaded from a file that
         the string points to. The file is assumed to be of CSV format, with the
         first column holding the wavelength (in *microns*), with the second
@@ -237,7 +237,6 @@ class Cauchy(ScattererSE):
     ``A + (B * 1000**2) / (wav**2) + (C * 1000**4) / (wav**4)``
 
     where the factors of 1000 convert from microns to nm.
-
 
     Parameters
     ----------
