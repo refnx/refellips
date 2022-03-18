@@ -1,6 +1,7 @@
 import numpy as np
 import os.path
 from os.path import join as pjoin
+from refnx.analysis import CurveFitter
 from refellips import (
     RI,
     Cauchy,
@@ -232,3 +233,24 @@ def test_refellips_against_wvase9():
 
     assert_allclose(psi, d_psi, rtol=5e-5)
     assert_allclose(delta, d_delta, rtol=3e-4)
+
+
+def test_smoke_test_a_fit():
+    dname = pjoin(pth, "WVASE_example_2nmSiO2_20nmPNIPAM_MultiWavelength.txt")
+    data = DataSE(data=dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    PNIPAM = RI(pjoin(pth, "../materials/pnipam.csv"))
+    air = RI(pjoin(pth, "../materials/air.csv"))
+
+    PNIPAM_layer = PNIPAM(150)
+    PNIPAM_layer.thick.setp(vary=True, bounds=(100,500))
+
+    struc = air() | PNIPAM_layer | sio2(20) | si()
+    model = ReflectModelSE(struc)
+
+    objective = ObjectiveSE(model, data)
+    fitter = CurveFitter(objective)
+    fitter.fit(method='least_squares')
+    assert objective.chisqr() < 0.055
