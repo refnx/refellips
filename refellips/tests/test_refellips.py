@@ -186,3 +186,49 @@ def test_refellips_against_wvase7():
 
     assert_allclose(psi, d_psi, rtol=3e-4)
     assert_allclose(delta, d_delta, rtol=3e-4)
+
+
+def test_refellips_against_wvase8():
+    # A comparison to WVASE for a 2 nm SiO and
+    # 65 nm aluminium oxide film in air.
+    dname = pjoin(pth, "WVASE_example_2nmSiO2_65nmAl2O3_MultiWavelength.txt")
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    al2o3 = RI(pjoin(pth, "../materials/aluminium_oxide.csv"))
+    air = RI(pjoin(pth, "../materials/air.csv"))
+
+    struc = air() | al2o3(650) | sio2(20) | si()
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, aoi])
+
+    assert_allclose(psi, d_psi, rtol=3e-4)
+    assert_allclose(delta, d_delta, rtol=3e-4)
+
+
+def test_refellips_against_wvase9():
+    # A comparison to WVASE for a 10 nm SiO2 and
+    # 325 nm aluminium oxide film in air.
+    dname = pjoin(pth, "WVASE_example_10nmSiO2_325nmAl2O3_MultiWavelength.txt")
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    al2o3 = RI(pjoin(pth, "../materials/aluminium_oxide.csv"))
+    air = RI(pjoin(pth, "../materials/air.csv"))
+
+    struc = air() | al2o3(3250) | sio2(100) | si()
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, aoi])
+
+    assert_allclose(psi, d_psi, rtol=5e-5)
+    assert_allclose(delta, d_delta, rtol=3e-4)
