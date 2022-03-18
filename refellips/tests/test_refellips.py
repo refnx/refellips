@@ -90,12 +90,12 @@ def test_refellips_against_wvase3():
 
 def test_refellips_against_wvase4():
     # A 30 nm SiO film with ambient as water compared to WVASE
-    dname = pjoin(pth, "TestData_cauchy.txt")
-    data = DataSE('../../demos/WVASE_example_30nmSiO2_Water_MultiWavelength.txt')
+    dname = pjoin(pth, "WVASE_example_30nmSiO2_Water_MultiWavelength.txt")
+    data = DataSE(dname)
 
-    si = RI('../materials/silicon.csv')
-    sio2 = RI('../materials/silica.csv')
-    h2o = RI('../materials/water.csv')
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    h2o = RI(pjoin(pth, "../materials/water.csv"))
 
     struc = h2o() | sio2(300) | si()
     struc.solvent = h2o
@@ -103,20 +103,8 @@ def test_refellips_against_wvase4():
     model = ReflectModelSE(struc, delta_offset=0)
     model._flip_delta = True
 
-    fig, ax = plt.subplots()
-    axt = ax.twinx()
-
     wavelength, aoi, d_psi, d_delta = data.data
     psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
-
-    ax.plot(wavelength, d_psi, ls='dotted', color='k', label='wvase', zorder=3)
-    axt.plot(wavelength, d_delta, ls='dotted', color='k', zorder=3)
-    ax.plot(wavelength, psi, color='r', label='refellips')
-    axt.plot(wavelength, delta, color='r')
-
-    ax.legend(frameon=False, loc='upper center')
-    ax.set(ylabel='Psi', xlabel='Wavelength (nm)')
-    axt.set(ylabel='Delta')
 
     assert_allclose(psi, d_psi, rtol=5e-4)
     assert_allclose(delta, d_delta, rtol=5e-4)
