@@ -108,3 +108,30 @@ def test_refellips_against_wvase4():
 
     assert_allclose(psi, d_psi, rtol=5e-4)
     assert_allclose(delta, d_delta, rtol=5e-4)
+
+
+def test_refellips_against_wvase5():
+    # A 3 nm SiO film with 30 % water compared to WVASE
+    dname = pjoin(pth, "WVASE_example_3nmSiO2_30EMA_MultiWavelength.txt")
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    h2o = RI(pjoin(pth, "../materials/water.csv"))
+
+    silica = sio2(30)
+    silica.name = 'Silica'
+    silica.vfsolv.setp(value=0.3)
+
+    struc = h2o() | silica | si()
+    struc.solvent = h2o
+    struc.ema_method = 'linear'
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+
+    assert_allclose(psi, d_psi, rtol=6e-4)
+    assert_allclose(delta, d_delta, rtol=6e-4)
