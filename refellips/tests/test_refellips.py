@@ -10,7 +10,7 @@ from refellips import (
     ObjectiveSE,
     SlabSE,
     StructureSE,
-    load_material
+    load_material,
 )
 from numpy.testing import assert_allclose
 
