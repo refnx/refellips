@@ -1,4 +1,12 @@
-from .structureSE import RI, StructureSE, SlabSE, Cauchy
+from .structureSE import (
+    RI,
+    StructureSE,
+    SlabSE,
+    Cauchy,
+    ComponentSE,
+    materials,
+    load_material,
+)
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE
 from .objectiveSE import ObjectiveSE
