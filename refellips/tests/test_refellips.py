@@ -104,7 +104,7 @@ def test_refellips_against_wvase4():
     model._flip_delta = True
 
     wavelength, aoi, d_psi, d_delta = data.data
-    psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+    psi, delta = model(np.c_[wavelength, aoi])
 
     assert_allclose(psi, d_psi, rtol=5e-4)
     assert_allclose(delta, d_delta, rtol=5e-4)
@@ -131,7 +131,38 @@ def test_refellips_against_wvase5():
     model._flip_delta = True
 
     wavelength, aoi, d_psi, d_delta = data.data
-    psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+    psi, delta = model(np.c_[wavelength, aoi])
+
+    assert_allclose(psi, d_psi, rtol=6e-4)
+    assert_allclose(delta, d_delta, rtol=6e-4)
+
+
+def test_refellips_against_wvase6():
+    # A comparison to WVASE for a 2 nm SiO and 20 nm polymer film system
+    # with a 50 % volume fraction of solvent in the polymer film.
+    dname = pjoin(
+        pth,
+        "WVASE_example_2nmSiO2_20nmPNIPAM_50EMA_MultiWavelength_2.txt"
+    )
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    polymer = Cauchy(A=1.47, B=0.00495)
+    h2o = Cauchy(A=1.3242, B=0.003064)
+
+    polymer_layer = polymer(200)
+    polymer_layer.name = 'PNIPAM'
+    polymer_layer.vfsolv.setp(value=0.5)
+
+    struc = h2o() | polymer_layer | sio2(20) | si()
+    struc.solvent = h2o
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, aoi])
 
     assert_allclose(psi, d_psi, rtol=6e-4)
     assert_allclose(delta, d_delta, rtol=6e-4)
