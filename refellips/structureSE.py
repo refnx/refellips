@@ -202,8 +202,9 @@ class RI(ScattererSE):
         RI : complex
             refractive index and extinction coefficient
         """
-        # just in case wavelength is None
-        wav = wavelength or self.wavelength
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
 
         if np.any(self._wav):
             # return a wavelength from a dispersion curve
@@ -278,8 +279,9 @@ class Cauchy(ScattererSE):
         RI : complex
             refractive index and extinction coefficient
         """
-        # just in case wavelength is None
-        wav = wavelength or self.wavelength
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
 
         real = (
             self.A.value
