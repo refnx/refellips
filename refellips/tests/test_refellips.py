@@ -10,6 +10,7 @@ from refellips import (
     ObjectiveSE,
     SlabSE,
     StructureSE,
+    load_material
 )
 from numpy.testing import assert_allclose
 
@@ -21,11 +22,8 @@ def test_bare_against_wvase1():
     dname = pjoin(pth, "TestData_bareSI.txt")
     data = DataSE(data=dname)
 
-    _f = pjoin(pth, "../materials/silicon.csv")
-    si = RI(_f)
-
-    _f = pjoin(pth, "../materials/void.csv")
-    void = RI(_f)
+    si = load_material("silicon")
+    void = load_material("void")
 
     struc = void() | si()
     assert isinstance(struc[0], SlabSE)

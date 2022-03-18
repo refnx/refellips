@@ -37,7 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
+import os.path
 import warnings
+import glob
 
 from refnx.reflect.structure import (
     Scatterer,
@@ -52,6 +54,12 @@ from refnx.reflect import _reflect as refcalc
 
 # contracting the SLD profile can greatly speed a reflectivity calculation up.
 contract_by_area = refcalc._contract_by_area
+
+
+# list of material dispersion curves distributed with refellips
+_pth = os.path.dirname(os.path.abspath(__file__))
+_material_files = glob.glob(os.path.join(_pth, "materials/*.csv"))
+materials = [os.path.basename(m)[:-4] for m in _material_files]
 
 
 class ScattererSE(Scatterer):
@@ -223,6 +231,30 @@ class RI(ScattererSE):
             return real + 1j * 0.0
         else:
             return self._RI + 1j * self._EC
+
+
+def load_material(material):
+    """
+    Loads a dispersion curve from a file distributed with refellips.
+
+    Parameters
+    ----------
+    material: str
+        One of the materials in ``refellips.materials``
+
+    Returns
+    -------
+    ri: refellips.RI
+
+    Notes
+    -----
+    To get a list of the dispersion curves distributed with refellips examine
+    the entries in ``refellips.materials``.
+    """
+    if material in materials:
+        pth = os.path.join(_pth, "materials", f"{material}.csv")
+        return RI(dispersion=pth)
+    raise ValueError(f"{material} is not in the list of dispersion curves")
 
 
 class Cauchy(ScattererSE):
