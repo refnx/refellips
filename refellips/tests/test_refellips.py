@@ -120,12 +120,12 @@ def test_refellips_against_wvase5():
     h2o = RI(pjoin(pth, "../materials/water.csv"))
 
     silica = sio2(30)
-    silica.name = 'Silica'
+    silica.name = "Silica"
     silica.vfsolv.setp(value=0.3)
 
     struc = h2o() | silica | si()
     struc.solvent = h2o
-    struc.ema_method = 'linear'
+    struc.ema_method = "linear"
 
     model = ReflectModelSE(struc, delta_offset=0)
     model._flip_delta = True
@@ -141,8 +141,7 @@ def test_refellips_against_wvase6():
     # A comparison to WVASE for a 2 nm SiO and 20 nm polymer film system
     # with a 50 % volume fraction of solvent in the polymer film.
     dname = pjoin(
-        pth,
-        "WVASE_example_2nmSiO2_20nmPNIPAM_50EMA_MultiWavelength_2.txt"
+        pth, "WVASE_example_2nmSiO2_20nmPNIPAM_50EMA_MultiWavelength_2.txt"
     )
     data = DataSE(dname)
 
@@ -152,7 +151,7 @@ def test_refellips_against_wvase6():
     h2o = Cauchy(A=1.3242, B=0.003064)
 
     polymer_layer = polymer(200)
-    polymer_layer.name = 'PNIPAM'
+    polymer_layer.name = "PNIPAM"
     polymer_layer.vfsolv.setp(value=0.5)
 
     struc = h2o() | polymer_layer | sio2(20) | si()
@@ -166,3 +165,24 @@ def test_refellips_against_wvase6():
 
     assert_allclose(psi, d_psi, rtol=6e-4)
     assert_allclose(delta, d_delta, rtol=6e-4)
+
+
+def test_refellips_against_wvase7():
+    # A comparison to WVASE for a 2 nm SiO and 117 nm gold film in air.
+    dname = pjoin(pth, "WVASE_example_2nmSiO2_117nmAu_MultiWavelength.txt")
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    gold = RI(pjoin(pth, "../materials/gold.csv"))
+    air = RI(pjoin(pth, "../materials/air.csv"))
+
+    struc = air() | gold(1170) | sio2(20) | si()
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, aoi])
+
+    assert_allclose(psi, d_psi, rtol=3e-4)
+    assert_allclose(delta, d_delta, rtol=3e-4)
