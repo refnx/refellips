@@ -245,12 +245,12 @@ def test_smoke_test_a_fit():
     air = RI(pjoin(pth, "../materials/air.csv"))
 
     PNIPAM_layer = PNIPAM(150)
-    PNIPAM_layer.thick.setp(vary=True, bounds=(100,500))
+    PNIPAM_layer.thick.setp(vary=True, bounds=(100, 500))
 
     struc = air() | PNIPAM_layer | sio2(20) | si()
     model = ReflectModelSE(struc)
 
     objective = ObjectiveSE(model, data)
     fitter = CurveFitter(objective)
-    fitter.fit(method='least_squares')
+    fitter.fit(method="least_squares")
     assert objective.chisqr() < 0.055
