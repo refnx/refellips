@@ -139,7 +139,9 @@ def test_refellips_against_wvase5():
 def test_refellips_against_wvase6():
     # A comparison to WVASE for a 2 nm SiO and 20 nm polymer film system
     # with a 50 % volume fraction of solvent in the polymer film.
-    dname = pjoin(pth, "WVASE_example_2nmSiO2_20nmPNIPAM_50EMA_MultiWavelength.txt")
+    dname = pjoin(
+        pth, "WVASE_example_2nmSiO2_20nmPNIPAM_50EMA_MultiWavelength.txt"
+    )
     data = DataSE(dname)
 
     si = RI(pjoin(pth, "../materials/silicon.csv"))

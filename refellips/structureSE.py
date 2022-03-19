@@ -411,12 +411,16 @@ class SlabSE(ComponentSE):
     def __init__(self, thick, ri, rough, name="", vfsolv=0, interface=None):
         self.name = name
         self._interfaces = None
-        self.thick = possibly_create_parameter(thick, name=f"{name} - thick", units="Å")
+        self.thick = possibly_create_parameter(
+            thick, name=f"{name} - thick", units="Å"
+        )
         if isinstance(ri, ScattererSE):
             self.ri = ri
         else:
             self.ri = RI(ri)
-        self.rough = possibly_create_parameter(rough, name=f"{name} - rough", units="Å")
+        self.rough = possibly_create_parameter(
+            rough, name=f"{name} - rough", units="Å"
+        )
         self.vfsolv = possibly_create_parameter(
             vfsolv, name=f"{name} - volfrac solvent", bounds=(0.0, 1.0)
         )
@@ -574,7 +578,9 @@ class StructureSE(Structure):
             return
 
         if not isinstance(item, ComponentSE):
-            raise ValueError("You can only add ComponentSE objects to a structure")
+            raise ValueError(
+                "You can only add ComponentSE objects to a structure"
+            )
         super().append(item)
 
     def slabs(self, **kwds):
@@ -611,7 +617,8 @@ class StructureSE(Structure):
             return None
 
         if not (
-            isinstance(self.data[-1], (SlabSE)) and isinstance(self.data[0], (SlabSE))
+            isinstance(self.data[-1], (SlabSE))
+            and isinstance(self.data[0], (SlabSE))
         ):
             raise ValueError(
                 "The first and last Components in a StructureSE need to be SlabsSE"
@@ -713,7 +720,9 @@ class StructureSE(Structure):
         if align != 0:
             align = int(align)
             if align >= len(slabs) - 1 or align < -1 * len(slabs):
-                raise RuntimeError("abs(align) has to be less than " "len(slabs) - 1")
+                raise RuntimeError(
+                    "abs(align) has to be less than " "len(slabs) - 1"
+                )
             # to figure out the offset you need to know the cumulative distance
             # to the interface
             slabs[0, 0] = slabs[-1, 0] = 0.0

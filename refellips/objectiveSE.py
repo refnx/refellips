@@ -321,7 +321,9 @@ class ObjectiveSE(BaseObjective):
         logp = np.sum(
             [
                 param.logp()
-                for param in f_unique(p for p in flatten(self.parameters) if p.vary)
+                for param in f_unique(
+                    p for p in flatten(self.parameters) if p.vary
+                )
             ]
         )
 
@@ -493,7 +495,9 @@ class ObjectiveSE(BaseObjective):
         scale = 1.0
         # scale by reduced chi2 if experimental uncertainties weren't used.
         if not (self.weighted):
-            scale = self.chisqr() / (n_datapoints - len(self.varying_parameters()))
+            scale = self.chisqr() / (
+                n_datapoints - len(self.varying_parameters())
+            )
 
         return covar * scale
 

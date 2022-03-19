@@ -216,7 +216,9 @@ class DataSE(object):
         header = "wavelength\tAOI\tPsi\tDelta"
         np.savetxt(
             f,
-            np.column_stack((self._wavelength, self._aoi, self._psi, self._delta)),
+            np.column_stack(
+                (self._wavelength, self._aoi, self._psi, self._delta)
+            ),
             delimiter="\t",
             header=header,
         )
@@ -311,7 +313,9 @@ def open_EP4file(fname, reflect_delta=False):
         del op["psi"]
         del op["delta"]
         name = _make_EP4dname(fname, op)
-        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta, **op))
+        datasets.append(
+            DataSE(data, name=name, reflect_delta=reflect_delta, **op)
+        )
 
     if len(datasets) == 1:
         return datasets[0]
@@ -397,7 +401,8 @@ def _loadEP4(df):
         loc_data = False
 
     if loc_data and (
-        len(df["X_pos"].drop_duplicates()) > 1 or len(df["Y_pos"].drop_duplicates()) > 1
+        len(df["X_pos"].drop_duplicates()) > 1
+        or len(df["Y_pos"].drop_duplicates()) > 1
     ):
         print("Treating as multiple locations")
         df = df[["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
@@ -440,7 +445,9 @@ def _loadEP4(df):
     return output
 
 
-def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
+def open_HORIBAfile(
+    fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
+):
     """
     Opening and loading in a data file created by a Horiba ellipsometer. Data
     file loaded should be of the Horiba file format .spe.
@@ -489,7 +496,9 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
             else:
                 if not len(l):
                     MDingest = False
-                    if not len(metadata[MDlabel]):  # there is no metadata for entry
+                    if not len(
+                        metadata[MDlabel]
+                    ):  # there is no metadata for entry
                         metadata[MDlabel] = None  # Set metadata to none
                     elif len(metadata[MDlabel]) == 1:  # there is only one entry
                         metadata[MDlabel] = metadata[MDlabel][
