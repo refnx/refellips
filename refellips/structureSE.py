@@ -222,13 +222,6 @@ class RI(ScattererSE):
             ri_imag = np.interp(wav, self._wav, self._EC)
             return ri_real + 1j * ri_imag
 
-        elif self.A is not None:
-            real = (
-                self.A.value
-                + (self.B.value * 1000**2) / (wav**2)
-                + (self.C.value * 1000**4) / (wav**4)
-            )
-            return real + 1j * 0.0
         else:
             return self._RI + 1j * self._EC
 
