@@ -34,6 +34,11 @@ jobs:
         pytest --pyargs refellips
         popd
 
+    - uses: actions/upload-artifact@v1
+      with:
+        name: refellips-wheel
+        path: dist/
+
   lint:
     runs-on: ubuntu-latest
     strategy:
