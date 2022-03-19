@@ -321,9 +321,7 @@ class ObjectiveSE(BaseObjective):
         logp = np.sum(
             [
                 param.logp()
-                for param in f_unique(
-                    p for p in flatten(self.parameters) if p.vary
-                )
+                for param in f_unique(p for p in flatten(self.parameters) if p.vary)
             ]
         )
 
@@ -495,9 +493,7 @@ class ObjectiveSE(BaseObjective):
         scale = 1.0
         # scale by reduced chi2 if experimental uncertainties weren't used.
         if not (self.weighted):
-            scale = self.chisqr() / (
-                n_datapoints - len(self.varying_parameters())
-            )
+            scale = self.chisqr() / (n_datapoints - len(self.varying_parameters()))
 
         return covar * scale
 
@@ -523,3 +519,80 @@ class ObjectiveSE(BaseObjective):
 
         """
         yield from self.parameters.pgen(ngen=ngen, nburn=nburn, nthin=nthin)
+
+    def plot(self, xaxis=None, plot_labels=True, fig=None):
+        """
+        Plot the data/model.
+
+        Requires matplotlib be installed.
+
+        Parameters
+        ----------
+        xaxis : String, optional
+            Either 'aoi' or 'wavelength'. If none specified, 'wavelength'
+            will be chosen unless there is more than 1 unique aoi.
+        plot_labels : Bool, optional
+            Whether to plot axis labels. The default is True.
+        fig: Figure instance, optional
+            If `fig` is not supplied then a new figure is created. Otherwise
+            the graph is created on the current axes on the supplied figure.
+
+        Returns
+        -------
+        fig, ax : :class:`matplotlib.Figure`, :class:`matplotlib.Axes`
+            `matplotlib` figure and axes objects.
+
+        """
+
+        data = self.data
+        model = self.model
+
+        if fig is None:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+        else:
+            ax = fig.gca()
+
+        axt = ax.twinx()
+
+        unique_wavs = np.unique(data.wavelength)
+        unique_aois = np.unique(data.aoi)
+
+        if xaxis is None:
+            if len(unique_aois) > 1:
+                xaxis = "aoi"
+            else:
+                xaxis = "wavelength"
+
+        if xaxis == "aoi":
+            aois = np.linspace(np.min(data.aoi), np.max(data.aoi))
+            x = data.aoi
+            xlab = "AOI (°)"
+
+            for wav in unique_wavs:
+                psis, deltas = model(np.c_[np.ones_like(aois) * wav, aois])
+                ax.plot(aois, psis, color="r")
+                axt.plot(aois, deltas, color="b")
+
+        elif xaxis == "wavelength":
+            wavs = np.linspace(np.min(data.wavelength), np.max(data.wavelength))
+            x = data.wavelength
+            xlab = "Wavelength (nm)"
+
+            for aoi in unique_aois:
+                psi, delta = model(np.c_[wavs, np.ones_like(wavs) * aoi])
+                ax.plot(np.ones_like(psi) * wavs, psi, color="r")
+                axt.plot(np.ones_like(delta) * wavs, delta, color="b")
+
+        p = ax.scatter(x, data.psi, color="r")
+        d = axt.scatter(x, data.delta, color="b")
+
+        ax.legend(handles=[p, d], labels=["Psi", "Delta"])
+
+        if plot_labels:
+            ax.set(ylabel="Psi", xlabel=xlab)
+            axt.set(ylabel="Delta")
+
+        return fig, ax
