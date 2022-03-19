@@ -20,13 +20,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Build wheel
+      run: |
+        python -m pip install build
+        python -m build .
+
     - name: Test with pytest
       run: |
-        python -m pip install pytest black
-        python -m pip install -e .
+        pushd dist
+        python -m pip install pytest black numpy scipy
         python -m pip install git+https://github.com/refnx/refnx.git
-        pytest
-
+        python -m pip install --only-binary=refellips --no-index --find-links=. refellips
+        pytest --pyargs refellips
+        popd
 
   lint:
     runs-on: ubuntu-latest
