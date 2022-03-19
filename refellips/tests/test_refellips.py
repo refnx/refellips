@@ -233,6 +233,38 @@ def test_refellips_against_wvase9():
     assert_allclose(delta, d_delta, rtol=3e-4)
 
 
+def test_refellips_against_wvase10():
+    # A comparison to WVASE for a 3 nm SiO$_2$ and 90 nm
+    # polymer film in water with 20% solvent using the
+    # Maxwell-Garnett EMA method.
+    dname = pjoin(
+        pth, "WVASE_example_30nmSiO2_90nmPNIPAM_20EMA-MG_MultiWavelength.txt"
+    )
+    data = DataSE(dname)
+
+    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    polymer = Cauchy(A=1.47, B=0.00495)
+    water = Cauchy(A=1.3242, B=0.003064)
+
+    polymer_layer = polymer(900)
+    polymer_layer.name = "PNIPAM"
+    polymer_layer.vfsolv.setp(value=0.2)
+
+    struc = water() | polymer_layer | sio2(30) | si()
+    struc.solvent = water
+    struc.ema = "maxwell-garnett"
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+
+    assert_allclose(psi, d_psi, rtol=7e-4)
+    assert_allclose(delta, d_delta, rtol=4e-4)
+
+
 def test_smoke_test_a_fit():
     dname = pjoin(pth, "WVASE_example_2nmSiO2_20nmPNIPAM_MultiWavelength.txt")
     data = DataSE(data=dname)
