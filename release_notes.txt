@@ -1,0 +1,38 @@
+To make a release:
+
+# make sure we're up to date
+- git fetch refellips
+- git checkout master
+- git rebase refellips/master
+- git clean -xdf (no detritus left over)
+
+# a feature branch for the release
+- git checkout -B <feature name>
+- if necessary bump version number in setup.py, but only do it once
+- change ISRELEASED to True in setup.py
+- git commit -a -m'REL: vX.Y.Z'
+- git push origin <feature name>
+
+
+# once the CI has passed
+- merge the feature branch
+- git fetch refellips
+- git checkout master
+- git rebase refellips/master
+
+# tag the release and put it onto github
+- git tag -a vX.Y.Z
+- git push refellips vX.Y.Z
+
+
+- python -m pip install build
+- python -m build .
+- twine upload dist/*
+
+
+# Epilogue
+- git checkout master
+- make sure ISRELEASED is False in setup.py, bump version number, create new
+  section in CHANGELOG.
+- git commit -a -m'MAINT: bump version number [ci skip]'
+- git push refellips master
