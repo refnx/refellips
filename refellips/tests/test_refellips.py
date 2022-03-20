@@ -242,7 +242,7 @@ def test_refellips_against_wvase10():
     )
     data = DataSE(dname)
 
-    si = RI(pjoin(pth, "../materials/silicon.csv"))
+    si = load_material("silicon")
     sio2 = load_material("silica")
     polymer = Cauchy(A=1.47, B=0.00495)
     water = Cauchy(A=1.3242, B=0.003064)
