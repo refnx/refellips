@@ -124,6 +124,7 @@ def setup_package():
     # Rewrite the version file every time
     write_version_py()
     info["version"] = get_version_info()[0]
+    info["zip_safe"] = False
     print(info["version"])
 
     setup(**info)
