@@ -303,7 +303,6 @@ class ReflectModelSE:
             raise ValueError("structure must be a StructureSE instance")
 
         self.name = name
-        self.DeltaOffset = delta_offset
         self._parameters = None
         self._flip_delta = False
 
@@ -313,7 +312,7 @@ class ReflectModelSE:
         self._structure = None
         self.structure = structure
 
-        self.DeltaOffset = possibly_create_parameter(
+        self.delta_offset = possibly_create_parameter(
             delta_offset, name="delta offset"
         )
 
@@ -339,21 +338,8 @@ class ReflectModelSE:
     def __repr__(self):
         return (
             f"ReflectModel({self._structure!r}, name={self.name!r},"
-            f" delta_offset = {self.delOffset!r} "
+            f" delta_offset = {self.delta_offset.value!r} "
         )
-
-    @property
-    def delOffset(self):
-        """
-        :class:`refnx.analysis.Parameter` - the calculated delta offset specific
-        to the ellipsometer and experimental setup used.
-
-        """
-        return self.DeltaOffset
-
-    @delOffset.setter
-    def delOffset(self, value):
-        self.DeltaOffset.value = value
 
     def model(self, wavelength_aoi, p=None):
         r"""
@@ -390,7 +376,7 @@ class ReflectModelSE:
                 AOI=aoi,
                 layers=self.structure.slabs()[..., :4],
                 wavelength=wav,
-                delta_offset=self.delOffset.value,
+                delta_offset=self.delta_offset.value,
                 reflect_delta=self._flip_delta,
             )
             psi[idx] = _psi
@@ -429,7 +415,7 @@ class ReflectModelSE:
         self._structure = structure
 
         p = Parameters(name="instrument parameters")
-        p.extend([self.delOffset])
+        p.extend([self.delta_offset])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
