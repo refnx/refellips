@@ -989,25 +989,24 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
 
         slabs[..., 1] = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
 
-        if (solvent.imag != 0) & (np.prod(slabs[..., 2]) != 0):
-            # k
-            e_h = slabs[..., 2]
-            e_i = solvent.imag**2
+        # k
+        e_h = slabs[..., 2]
+        e_i = solvent.imag**2
 
-            a = depolarisation_factor - 1
-            b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
-                vf - depolarisation_factor
-            )
-            c = (
-                (1 - vf) * e_h * e_i * depolarisation_factor
-                + vf * e_h * e_i * depolarisation_factor
-            )
+        a = depolarisation_factor - 1
+        b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
+            vf - depolarisation_factor
+        )
+        c = (
+            (1 - vf) * e_h * e_i * depolarisation_factor
+            + vf * e_h * e_i * depolarisation_factor
+        )
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning)
-                v = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
-                v = np.where(np.isfinite(v), v, 0)
-                slabs[..., 2] = v
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            v = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+            v = np.where(np.isfinite(v), v, 0)
+            slabs[..., 2] = v
 
     else:
         raise RuntimeError("No other method of mixing is known")
