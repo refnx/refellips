@@ -885,16 +885,23 @@ def overall_RI(slabs, solvent, ema="linear"):
 
         slabs[..., 1] += solvent.real**2 * vf
         slabs[..., 2] += solvent.imag**2 * vf
-    elif ema_method == "maxwell-garnett":
+    elif ema == "maxwell-garnett":
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
 
+        # n
         top_r = 2 * (1 - vf) * slabs[..., 1] + (1 + 2 * vf) * solvent.real**2
         bottom_r = (2 + vf) * slabs[..., 1] + (1 - vf) * solvent.real**2
         slabs[..., 1] *= top_r / bottom_r
 
-        top_r = 2 * (1 - vf) * slabs[..., 2] + (1 + 2 * vf) * solvent.imag**2
-        bottom_r = (2 + vf) * slabs[..., 2] + (1 - vf) * solvent.imag**2
-        slabs[..., 2] *= top_r / bottom_r
+        # k
+        top_i = 2 * (1 - vf) * slabs[..., 2] + (1 + 2 * vf) * solvent.imag**2
+        bottom_i = (2 + vf) * slabs[..., 2] + (1 - vf) * solvent.imag**2
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            v = top_i / bottom_i
+            v = np.where(np.isfinite(v), v, 0)
+            slabs[..., 2] *= v
     else:
         raise RuntimeError("No other method of mixing is known")
 
