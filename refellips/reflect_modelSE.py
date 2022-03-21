@@ -306,15 +306,15 @@ class ReflectModelSE:
         self._parameters = None
         self._flip_delta = False
 
+        self.delta_offset = possibly_create_parameter(
+            delta_offset, name="delta offset"
+        )
+
         # to make it more like a refnx.analysis.Model
         self.fitfunc = None
 
         self._structure = None
         self.structure = structure
-
-        self.delta_offset = possibly_create_parameter(
-            delta_offset, name="delta offset"
-        )
 
     def __call__(self, wavelength_aoi, p=None):
         r"""
