@@ -494,9 +494,15 @@ class StructureSE(Structure):
         be 1.0.
     wavelength : float, None
         Wavelength the sample was measured at.
-    ema : {'linear', 'maxwell-garnett'}
+    ema : {'linear', 'maxwell-garnett', 'bruggeman'}
         Specifies the effective medium approximation for how the RI of a
-        Component is mixed with the RI of the solvent.
+        Component is mixed with the RI of the solvent. Further details
+        regarding mixing are explained in the `slabs` method.
+    depolarisation_factor : float, int
+        The depolarisation factor is used only in the EMA calculations for
+        the Maxwell-Garnett and Bruggeman methods. It describes the
+        electric field screening: 0 prescribing no screening and 1
+        prescribing maximum screening.
     """
 
     def __init__(
@@ -508,6 +514,7 @@ class StructureSE(Structure):
         contract=0,
         wavelength=None,
         ema="linear",
+        depolarisation_factor=1 / 3,
     ):
         super().__init__()
         self._name = name
@@ -527,6 +534,7 @@ class StructureSE(Structure):
         self.data = [c for c in components if isinstance(c, ComponentSE)]
 
         self.ema = ema
+        self._depolarisation_factor = depolarisation_factor
 
     sld_profile = None
 
@@ -556,6 +564,20 @@ class StructureSE(Structure):
         else:
             solv = RI(ri)
             self._solvent = solv
+
+    @property
+    def depolarisation_factor(self):
+        """ """
+        return self._depolarisation_factor
+
+    @depolarisation_factor.setter
+    def depolarisation_factor(self, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError("Depolarisation factor is float or integer.")
+        if 0 <= value <= 1:
+            self._depolarisation_factor = value
+        else:
+            raise ValueError("Depolarisation factor needs to be within [0,1].")
 
     def append(self, item):
         """
@@ -605,7 +627,33 @@ class StructureSE(Structure):
         is the component in `Structure[0]`, which corresponds to
         `Structure.slab[-1]`.
 
+        Users can simulate mixing between two adjacent layers by specifying a
+        volume fraction of solvent (`vfsolv`). The `overall_ri` function then
+        performs the EMA using the specified method: linear, Maxwell-Garnett
+        or Bruggeman. All EMA calculations are performed by using the complex
+        dielectric function (i.e., square of refractive index and extinction
+        coefficient).
+        For a host layer (e_h) with volume fraction (vf) of impurities (e_i),
+        the overall RI is calculated by
+
+        >>> StructureSE.ema = 'linear'
+        e_linear = e_h * (1 - vf) + e_i * vf
+
+        >>>StructureSE.ema = 'maxwell-garnett'
+        >>>StructureSE.depolarisation_factor = 1/3
+        top = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
+        bottom = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
+        e_MG = e_h * top_r / bottom_r
+
+        >>>StructureSE.ema = 'bruggeman'
+        >>>StructureSE.depolarisation_factor = 1/3
+        b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (vf - depolarisation_factor)
+        e_BG = (b + np.sqrt(b**2 - 4 * (depolarisation_factor - 1) *
+                                 ((1 - vf) * e_h * e_i * depolarisation_factor +
+                                  vf * e_h * e_i * depolarisation_factor
+                                  ))) / (2 * (1 - depolarisation_factor))
         """
+
         if not len(self):
             return None
 
@@ -855,10 +903,15 @@ class StructureSE(Structure):
         if isinstance(solvent, ScattererSE):
             solv = solvent.complex(self.wavelength)
 
-        return overall_RI(slabs, solv, ema=self.ema)
+        return overall_RI(
+            slabs,
+            solv,
+            ema=self.ema,
+            depolarisation_factor=self.depolarisation_factor,
+        )
 
 
-def overall_RI(slabs, solvent, ema="linear"):
+def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
     """
     Calculates the overall refractive index of the material and solvent RI
     in a layer.
@@ -869,9 +922,11 @@ def overall_RI(slabs, solvent, ema="linear"):
         Slab representation of the layers to be averaged.
     solvent : complex or RI
         RI of solvating material.
-    ema : {'linear', 'maxwell-garnett'}
-        Specifies how refractive indices are mixed together
-
+    ema : {'linear', 'maxwell-garnett', 'bruggeman}
+        Specifies how refractive indices are mixed together. Further
+        details in the `slabs` method.
+    depolar : float
+        Depolarisation factor. Default is 1/3.
     Returns
     -------
     averaged_slabs : np.ndarray
@@ -885,23 +940,75 @@ def overall_RI(slabs, solvent, ema="linear"):
 
         slabs[..., 1] += solvent.real**2 * vf
         slabs[..., 2] += solvent.imag**2 * vf
+
     elif ema == "maxwell-garnett":
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
 
         # n
-        top_r = 2 * (1 - vf) * slabs[..., 1] + (1 + 2 * vf) * solvent.real**2
-        bottom_r = (2 + vf) * slabs[..., 1] + (1 - vf) * solvent.real**2
+        # e_h is the dielectric function for the host slab
+        e_h = slabs[..., 1]
+        # e_i is the dielectric function for the 'inclusion/impurity' slab
+        e_i = solvent.real**2
+
+        top_r = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
+        bottom_r = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
         slabs[..., 1] *= top_r / bottom_r
 
         # k
-        top_i = 2 * (1 - vf) * slabs[..., 2] + (1 + 2 * vf) * solvent.imag**2
-        bottom_i = (2 + vf) * slabs[..., 2] + (1 - vf) * solvent.imag**2
+        e_h = slabs[..., 2]
+        e_i = solvent.imag**2
+
+        top_i = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
+        bottom_i = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
             v = top_i / bottom_i
             v = np.where(np.isfinite(v), v, 0)
             slabs[..., 2] *= v
+
+    elif ema == "bruggeman":
+        # The solution to the Bruggeman EMA method is solved using the
+        # quadratic equation, only one of which is physically reasonable.
+        slabs[..., 1:3] = slabs[..., 1:3] ** 2
+
+        # n
+        # e_h is the dielectric function for the host slab
+        e_h = slabs[..., 1]
+        # e_i is the dielectric function for the 'inclusion/impurity' slab
+        e_i = solvent.real**2
+
+        a = depolarisation_factor - 1
+        b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
+            vf - depolarisation_factor
+        )
+        c = (
+            (1 - vf) * e_h * e_i * depolarisation_factor
+            + vf * e_h * e_i * depolarisation_factor
+        )
+
+        slabs[..., 1] = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+
+        if (solvent.imag != 0) & (np.prod(slabs[..., 2]) != 0):
+            # k
+            e_h = slabs[..., 2]
+            e_i = solvent.imag**2
+
+            a = depolarisation_factor - 1
+            b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
+                vf - depolarisation_factor
+            )
+            c = (
+                (1 - vf) * e_h * e_i * depolarisation_factor
+                + vf * e_h * e_i * depolarisation_factor
+            )
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning)
+                v = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+                v = np.where(np.isfinite(v), v, 0)
+                slabs[..., 2] = v
+
     else:
         raise RuntimeError("No other method of mixing is known")
 
