@@ -17,9 +17,9 @@ What's the best way to ask for help or submit a bug report?
 -----------------------------------------------------------
 
 If you have any questions on the use of *refellips* or calculations
-performed by *refellips* please `contact us <mailto:andyfaff+refellips@gmail.com>`_.
-If you find a bug in the code or documentation, please use
-`GitHub Issues`_.
+performed by *refellips* please
+`contact us <mailto:andyfaff+refellips@gmail.com>`_.
+If you find a bug in the code or documentation, please use `GitHub Issues`_.
 
 
 What are the 'fronting' and 'backing' media?
@@ -53,9 +53,10 @@ Where do I find dispersion curves for a material?
 
 *refellips* contains preloaded dispersion curves for select materials, which
 are accessible by the `load_material` function. These materials were sourced
-from `refractiveindex.info`_, and include air, a void, water, dimethyl sulfoxide,
-silicon, silica, gold, aluminium oxide, polystyrene, poly(N-isopropylacrylamide)
-(PNIPAM) and a material which represents a diffuse polymer.
+from `refractiveindex.info`_, and include air, a void, water,
+dimethyl sulfoxide, silicon, silica, gold, aluminium oxide, polystyrene,
+poly(N-isopropylacrylamide) (PNIPAM) and a material which represents a diffuse
+polymer.
 
 If required, users can download their own dispersion curves from
 `refractiveindex.info`_ and load them into *refellips* using::
@@ -63,10 +64,13 @@ If required, users can download their own dispersion curves from
     my_material = RI("my_dispersion.csv")
 
 The loaded file must contain at least two columns, assumed to be wavelength
-(in microns) and refractive index. If three columns are provided the third is
-loaded as the extinction coefficient.
+(in microns) and refractive index.
+If three columns are provided the third is loaded as the extinction coefficient.
+The *refellips* maintainers are happy to include additional dispersion curves
+with the package, please ask if you'd like this to happen.
 
-Alternatively, users have the option to specify Cauchy parameters (a,b,c) for their material::
+Alternatively, users have the option to specify Cauchy parameters (a,b,c) for their
+material::
 
     my_material = Cauchy(A=a, B=b, C=c)
 
