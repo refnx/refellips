@@ -970,7 +970,9 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
     elif ema == "bruggeman":
         # The solution to the Bruggeman EMA method is solved using the
         # quadratic equation, only one of which is physically reasonable.
+
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
+        # slabs[..., 1:3] = np.power(complex(slabs[..., 1], slabs[..., 2]), 2)
 
         # n
         # e_h is the dielectric function for the host slab
@@ -978,33 +980,44 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
         # e_i is the dielectric function for the 'inclusion/impurity' slab
         e_i = solvent.real**2
 
-        a = depolarisation_factor - 1
         b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
             vf - depolarisation_factor
         )
-        c = (
-            (1 - vf) * e_h * e_i * depolarisation_factor
-            + vf * e_h * e_i * depolarisation_factor
-        )
-
-        slabs[..., 1] = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+        slabs[..., 1] = (
+            b
+            + np.sqrt(
+                b**2
+                - 4
+                * (depolarisation_factor - 1)
+                * (
+                    (1 - vf) * e_h * e_i * depolarisation_factor
+                    + vf * e_h * e_i * depolarisation_factor
+                )
+            )
+        ) / (2 * (1 - depolarisation_factor))
 
         # k
         e_h = slabs[..., 2]
         e_i = solvent.imag**2
 
-        a = depolarisation_factor - 1
         b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
             vf - depolarisation_factor
-        )
-        c = (
-            (1 - vf) * e_h * e_i * depolarisation_factor
-            + vf * e_h * e_i * depolarisation_factor
         )
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            v = (b + np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+            v = (
+                b
+                + np.sqrt(
+                    b**2
+                    - 4
+                    * (depolarisation_factor - 1)
+                    * (
+                        (1 - vf) * e_h * e_i * depolarisation_factor
+                        + vf * e_h * e_i * depolarisation_factor
+                    )
+                )
+            ) / (2 * (1 - depolarisation_factor))
             v = np.where(np.isfinite(v), v, 0)
             slabs[..., 2] = v
 

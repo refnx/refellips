@@ -271,7 +271,7 @@ def test_refellips_against_wvase11():
     # Bruggeman EMA method with a depolarisation factor
     # of 0.2.
     dname = pjoin(
-        pth, "WVASE_example_6nmSiO2_170nmPolymer_70EMA-BG_MultiWavelength.txt"
+        pth, "WVASE_example_6nmSiO2_145nmPolymer_70EMA-BG_MultiWavelength.txt"
     )
     data = DataSE(dname)
 
