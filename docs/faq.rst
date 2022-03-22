@@ -82,7 +82,7 @@ What EMA methods does *refellips* provide?
 *refellips* offers the three main methods of effective medium approximations
 (EMA): linear, Maxwell-Garnett and Bruggeman. All EMA calculations performed
 in *refellips* are done based on two-component mixing, and done so using the
-complex dielectric function, and not refractive indicies and extinction
+complex dielectric function, and not refractive indices and extinction
 coefficients.
 
 For the examples below, :math:`\varepsilon_1` and :math:`f_1`
