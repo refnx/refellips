@@ -629,10 +629,10 @@ class StructureSE(Structure):
 
         Users can simulate mixing between two adjacent layers by specifying a
         volume fraction of solvent (`vfsolv`). The `overall_ri` function then
-        performs the EMA using the specified method: linear, Maxwell-Garnett
-        or Bruggeman. All EMA calculations are performed by using the complex
-        dielectric function (i.e., square of refractive index and extinction
-        coefficient).
+        performs the EMA using the specified method: 'linear',
+        'maxwell-garnett' or 'bruggeman'. All EMA calculations are performed
+        by using the complex dielectric function (i.e., square of refractive
+        index and extinction coefficient).
         For a host layer (e_h) with volume fraction (vf) of impurities (e_i),
         the overall RI is calculated by
 
@@ -922,7 +922,7 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
         Slab representation of the layers to be averaged.
     solvent : complex or RI
         RI of solvating material.
-    ema : {'linear', 'maxwell-garnett', 'bruggeman}
+    ema : {'linear', 'maxwell-garnett', 'bruggeman'}
         Specifies how refractive indices are mixed together. Further
         details in the `slabs` method.
     depolar : float
@@ -933,14 +933,18 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
         the averaged slabs.
     """
     vf = slabs[..., 4]
+    solvent = complex(solvent)
 
     if ema == "linear":
-        slabs[..., 1:3] = slabs[..., 1:3] ** 2
-        slabs[..., 1:3] *= (1 - vf)[..., np.newaxis]
+        # N = n + ik
+        N = slabs[..., 1] + slabs[..., 2] * 1j
+        E = np.power(N, 2)
 
-        slabs[..., 1] += solvent.real**2 * vf
-        slabs[..., 2] += solvent.imag**2 * vf
-
+        E = (1 - vf) * E + vf * (solvent**2)
+        N = np.sqrt(E)
+        slabs[..., 1] = np.real(N)
+        slabs[..., 2] = np.imag(N)
+        return slabs
     elif ema == "maxwell-garnett":
         slabs[..., 1:3] = slabs[..., 1:3] ** 2
 
@@ -1023,7 +1027,6 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
 
     else:
         raise RuntimeError("No other method of mixing is known")
-
     slabs[..., 1:3] = np.sqrt(slabs[..., 1:3])
 
     return slabs

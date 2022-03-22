@@ -124,7 +124,7 @@ def test_refellips_against_wvase5():
 
     struc = h2o() | silica | si()
     struc.solvent = h2o
-    struc.ema_method = "linear"
+    struc.ema = "linear"
 
     model = ReflectModelSE(struc, delta_offset=0)
     model._flip_delta = True
@@ -133,7 +133,7 @@ def test_refellips_against_wvase5():
     psi, delta = model(np.c_[wavelength, aoi])
 
     assert_allclose(psi, d_psi, rtol=6e-4)
-    assert_allclose(delta, d_delta, rtol=6e-4)
+    assert_allclose(delta, d_delta, rtol=1e-4)
 
 
 def test_refellips_against_wvase6():
@@ -275,8 +275,8 @@ def test_refellips_against_wvase11():
     )
     data = DataSE(dname)
 
-    si = RI(pjoin(pth, "../materials/silicon.csv"))
-    sio2 = RI(pjoin(pth, "../materials/silica.csv"))
+    si = load_material("silicon")
+    sio2 = load_material("silica")
     polymer = Cauchy(A=1.66, B=0.006)
     water = load_material("water")
 
