@@ -649,8 +649,7 @@ class StructureSE(Structure):
         >>> StructureSE.depolarisation_factor = 1/3
         b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (vf - depolarisation_factor)
         e_BG = (b + np.sqrt(b**2 - 4 * (depolarisation_factor - 1) *
-                                 ((1 - vf) * e_h * e_i * depolarisation_factor +
-                                  vf * e_h * e_i * depolarisation_factor
+                                 (2 * vf * e_h * e_i * depolarisation_factor
                                   ))) / (2 * (1 - depolarisation_factor))
         """
 
@@ -970,10 +969,7 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
                     b**2
                     - 4
                     * (depolarisation_factor - 1)
-                    * (
-                        (1 - vf) * E * solvent**2 * depolarisation_factor
-                        + vf * E * solvent**2 * depolarisation_factor
-                    )
+                    * (2 * E * solvent**2 * depolarisation_factor)
                 )
             ) / (2 * (1 - depolarisation_factor))
             E = np.where(np.isfinite(v), v, 0)
