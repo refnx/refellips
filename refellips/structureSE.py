@@ -573,7 +573,7 @@ class StructureSE(Structure):
     @depolarisation_factor.setter
     def depolarisation_factor(self, value):
         if 0 <= float(value) <= 1:
-            self._depolarisation_factor = 1
+            self._depolarisation_factor = float(value)
         else:
             raise ValueError(
                 "Depolarisation factor needs to be a float in [0, 1]."
