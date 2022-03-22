@@ -572,7 +572,10 @@ class StructureSE(Structure):
 
     @depolarisation_factor.setter
     def depolarisation_factor(self, value):
-        if not isinstance(value, (int, float)):
+        if 0 <= float(value) <= 1:
+            self._depolarisation_factor = 1
+        else:
+             raise ValueError("Depolarisation factor needs to be within [0, 1].")
             raise TypeError("Depolarisation factor is float or integer.")
         if 0 <= value <= 1:
             self._depolarisation_factor = value
