@@ -125,8 +125,8 @@ The Bruggeman EMA method is employed using Equation :eq:`bg`,
     :label: bg
 
     \varepsilon_{\text{BG}} = \frac{b +
-                \sqrt{b^2 - 4 (v - 1) (f_1 e_1 e_2 v + f_2 e_1 e_2 v))}}
-                {2(v - 1)}
+                \sqrt{b^2 - 8 (v - 1) (e_1 e_2 v))}}
+                {2(1 - v)}
 
 where :math:`b = e_1 (f_1 - v) + e_2 (f_2 - v)`.
 
