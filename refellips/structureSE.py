@@ -935,76 +935,30 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
     vf = slabs[..., 4]
     solvent = complex(solvent)
 
+    # N = n + ik
+    N = slabs[..., 1] + slabs[..., 2] * 1j
+
+    # E is the complex dielectric function
+    E = np.power(N, 2)
+
     if ema == "linear":
-        # N = n + ik
-        N = slabs[..., 1] + slabs[..., 2] * 1j
-        E = np.power(N, 2)
-
         E = (1 - vf) * E + vf * (solvent**2)
-        N = np.sqrt(E)
-        slabs[..., 1] = np.real(N)
-        slabs[..., 2] = np.imag(N)
-        return slabs
+
     elif ema == "maxwell-garnett":
-        slabs[..., 1:3] = slabs[..., 1:3] ** 2
-
-        # n
-        # e_h is the dielectric function for the host slab
-        e_h = slabs[..., 1]
-        # e_i is the dielectric function for the 'inclusion/impurity' slab
-        e_i = solvent.real**2
-
-        top_r = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
-        bottom_r = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
-        slabs[..., 1] *= top_r / bottom_r
-
-        # k
-        e_h = slabs[..., 2]
-        e_i = solvent.imag**2
-
-        top_i = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
-        bottom_i = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
+        top = E + (depolarisation_factor * (1 - vf) + vf) * (solvent**2 - E)
+        bottom = E + depolarisation_factor * (1 - vf) * (solvent**2 - E)
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            v = top_i / bottom_i
+            v = top / bottom
             v = np.where(np.isfinite(v), v, 0)
-            slabs[..., 2] *= v
+            E = E * v
 
     elif ema == "bruggeman":
         # The solution to the Bruggeman EMA method is solved using the
         # quadratic equation, only one of which is physically reasonable.
 
-        slabs[..., 1:3] = slabs[..., 1:3] ** 2
-        # slabs[..., 1:3] = np.power(complex(slabs[..., 1], slabs[..., 2]), 2)
-
-        # n
-        # e_h is the dielectric function for the host slab
-        e_h = slabs[..., 1]
-        # e_i is the dielectric function for the 'inclusion/impurity' slab
-        e_i = solvent.real**2
-
-        b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
-            vf - depolarisation_factor
-        )
-        slabs[..., 1] = (
-            b
-            + np.sqrt(
-                b**2
-                - 4
-                * (depolarisation_factor - 1)
-                * (
-                    (1 - vf) * e_h * e_i * depolarisation_factor
-                    + vf * e_h * e_i * depolarisation_factor
-                )
-            )
-        ) / (2 * (1 - depolarisation_factor))
-
-        # k
-        e_h = slabs[..., 2]
-        e_i = solvent.imag**2
-
-        b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (
+        b = E * ((1 - vf) - depolarisation_factor) + solvent**2 * (
             vf - depolarisation_factor
         )
 
@@ -1017,16 +971,18 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
                     - 4
                     * (depolarisation_factor - 1)
                     * (
-                        (1 - vf) * e_h * e_i * depolarisation_factor
-                        + vf * e_h * e_i * depolarisation_factor
+                        (1 - vf) * E * solvent**2 * depolarisation_factor
+                        + vf * E * solvent**2 * depolarisation_factor
                     )
                 )
             ) / (2 * (1 - depolarisation_factor))
-            v = np.where(np.isfinite(v), v, 0)
-            slabs[..., 2] = v
+            E = np.where(np.isfinite(v), v, 0)
 
     else:
         raise RuntimeError("No other method of mixing is known")
-    slabs[..., 1:3] = np.sqrt(slabs[..., 1:3])
+
+    N = np.sqrt(E)
+    slabs[..., 1] = np.real(N)
+    slabs[..., 2] = np.imag(N)
 
     return slabs
