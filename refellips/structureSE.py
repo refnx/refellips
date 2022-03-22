@@ -642,14 +642,14 @@ class StructureSE(Structure):
         >>> StructureSE.ema = 'linear'
         e_linear = e_h * (1 - vf) + e_i * vf
 
-        >>>StructureSE.ema = 'maxwell-garnett'
-        >>>StructureSE.depolarisation_factor = 1/3
+        >>> StructureSE.ema = 'maxwell-garnett'
+        >>> StructureSE.depolarisation_factor = 1/3
         top = e_h + (depolarisation_factor * (1 - vf) + vf) * (e_i - e_h)
         bottom = e_h + depolarisation_factor * (1 - vf) * (e_i - e_h)
         e_MG = e_h * top_r / bottom_r
 
-        >>>StructureSE.ema = 'bruggeman'
-        >>>StructureSE.depolarisation_factor = 1/3
+        >>> StructureSE.ema = 'bruggeman'
+        >>> StructureSE.depolarisation_factor = 1/3
         b = e_h * ((1 - vf) - depolarisation_factor) + e_i * (vf - depolarisation_factor)
         e_BG = (b + np.sqrt(b**2 - 4 * (depolarisation_factor - 1) *
                                  ((1 - vf) * e_h * e_i * depolarisation_factor +
