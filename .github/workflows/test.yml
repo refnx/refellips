@@ -28,8 +28,7 @@ jobs:
     - name: Test with pytest
       run: |
         pushd dist
-        python -m pip install pytest black numpy scipy pandas
-        python -m pip install git+https://github.com/refnx/refnx.git
+        python -m pip install pytest black numpy scipy pandas refnx>=0.1.27
         python -m pip install --only-binary=refellips --no-index --find-links=. refellips
         pytest --pyargs refellips
         popd
@@ -84,7 +83,6 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install .
         python -m pip install wheel
-        python -m pip install git+https://github.com/refnx/refnx.git
         cd docs
         python -m pip install -r requirements.txt
         make html
