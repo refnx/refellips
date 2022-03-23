@@ -34,7 +34,8 @@ use the `GitHub repository`_; all contributions are welcomed.
 
    installation
    getting_started.ipynb
-   FAQ
+   faq
+   testimonials
    modules
 
 

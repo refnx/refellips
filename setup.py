@@ -11,7 +11,7 @@ packages = find_packages()
 # versioning
 MAJOR = 0
 MINOR = 0
-MICRO = 0
+MICRO = 1
 ISRELEASED = False
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
@@ -57,7 +57,9 @@ def git_version():
         env["LANGUAGE"] = "C"
         env["LANG"] = "C"
         env["LC_ALL"] = "C"
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, env=env
+        ).communicate()[0]
         return out
 
     try:
@@ -124,6 +126,7 @@ def setup_package():
     # Rewrite the version file every time
     write_version_py()
     info["version"] = get_version_info()[0]
+    info["zip_safe"] = False
     print(info["version"])
 
     setup(**info)

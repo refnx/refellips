@@ -50,7 +50,7 @@ The main *refellips* repository may be a lot more advanced than your fork, or yo
   ```
   git fetch upstream
   ```
-  2) Now update the local branch you're on by rebasing against the *refnx* master branch:
+  2) Now update the local branch you're on by rebasing against the *refellips* master branch:
   ```
   git rebase upstream/master
   ```
@@ -61,7 +61,7 @@ The main *refellips* repository may be a lot more advanced than your fork, or yo
 
 ### Adding a feature
 The git repository is automatically on the master branch to start with. However,
-when developing features that you'd like to contribute to the *refnx* project
+when developing features that you'd like to contribute to the *refellips* project
 you'll need to do it on a feature branch.
 
   1) Create a feature branch and check it out:
@@ -77,15 +77,15 @@ you'll need to do it on a feature branch.
   ```
   git commit -a
   ```
-  4) Now you need to push those changes on the *my_feature_branch* branch to *your* fork of the refnx repository on github:
+  4) Now you need to push those changes on the *my_feature_branch* branch to *your* fork of the refellips repository on github:
   ```
   git push origin my_feature_branch
   ```
-  5) On the main [refellips][github-refellips] repository you should be able to create a pull request (PR). The PR says that you'd like the *refnx* project to include the changes you made.
-  6) Once the automated tests have passed, and the *refnx* maintainers are happy with the changes you've made then the PR is merged. You can then delete the feature branch on github, and delete your local feature branch:
+  5) On the main [refellips][github-refellips] repository you should be able to create a pull request (PR). The PR says that you'd like the *refellips* project to include the changes you made.
+  6) Once the automated tests have passed, and the *refellips* maintainers are happy with the changes you've made then the PR is merged. You can then delete the feature branch on github, and delete your local feature branch:
   ```
   git branch -D my_feature_branch
   ```
 
-   [PyPi]: <https://pypi.python.org/pypi/refnx>
+   [PyPi]: <https://pypi.python.org/pypi/refellips>
    [github-refellips]: <https://github.com/refnx/refellips>

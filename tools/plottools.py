@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Aug 24 08:40:16 2021
-
-@author: Isaac
-"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -71,7 +66,7 @@ def plot_ellipsdata(
         unique_wavs = np.unique(data.wavelength)
         aois = np.linspace(np.min(data.aoi) - 5, np.max(data.aoi) + 5)
         x = data.aoi
-        xlab = "AOI, °"
+        xlab = "AOI (°)"
 
         if model != None:
             for wav in unique_wavs:
@@ -87,13 +82,15 @@ def plot_ellipsdata(
         if model != None:
             print(x)
             for idx, wav in enumerate(np.unique(data.wavelength)):
-                wavelength, aoi, d_psi, d_delta = list(data.unique_wavelength_data())[idx]
+                wavelength, aoi, d_psi, d_delta = list(data.unique_wavelength_data())[
+                    idx
+                ]
 
                 psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
-                ax.plot(np.ones_like(psi) * wavelength, psi, color='r')
-                axt.plot(np.ones_like(delta) * wavelength, delta, color='b')
+                ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
+                axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
 
-            xlab = "Wavelength, nm"
+            xlab = "Wavelength (nm)"
 
     p = ax.scatter(x, data.psi, color="r")
     d = axt.scatter(x, data.delta, color="b")
@@ -157,7 +154,7 @@ def plot_structure(
     structure.reverse_structure = reverse_structure
 
     for wav, col in zip(wavelengths, colors):
-        ax.plot(*structure.sld_profile(), color=col, alpha=alpha, label=f"{wav} nm")
+        ax.plot(*structure.ri_profile(), color=col, alpha=alpha, label=f"{wav} nm")
 
     structure.reverse_structure = False
 
