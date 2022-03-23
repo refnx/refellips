@@ -124,7 +124,7 @@ def test_refellips_against_wvase5():
 
     struc = h2o() | silica | si()
     struc.solvent = h2o
-    struc.ema_method = "linear"
+    struc.ema = "linear"
 
     model = ReflectModelSE(struc, delta_offset=0)
     model._flip_delta = True
@@ -133,7 +133,7 @@ def test_refellips_against_wvase5():
     psi, delta = model(np.c_[wavelength, aoi])
 
     assert_allclose(psi, d_psi, rtol=6e-4)
-    assert_allclose(delta, d_delta, rtol=6e-4)
+    assert_allclose(delta, d_delta, rtol=1e-4)
 
 
 def test_refellips_against_wvase6():
@@ -238,7 +238,7 @@ def test_refellips_against_wvase10():
     # polymer film in water with 20% solvent using the
     # Maxwell-Garnett EMA method.
     dname = pjoin(
-        pth, "WVASE_example_30nmSiO2_90nmPNIPAM_20EMA-MG_MultiWavelength.txt"
+        pth, "WVASE_example_3nmSiO2_90nmPNIPAM_20EMA-MG_MultiWavelength.txt"
     )
     data = DataSE(dname)
 
@@ -263,6 +263,40 @@ def test_refellips_against_wvase10():
 
     assert_allclose(psi, d_psi, rtol=7e-4)
     assert_allclose(delta, d_delta, rtol=4e-4)
+
+
+def test_refellips_against_wvase11():
+    # A comparison to WVASE for a 6 nm SiO2 and 145 nm
+    # polymer film in water with 70% solvent using the
+    # Bruggeman EMA method with a depolarisation factor
+    # of 0.2.
+    dname = pjoin(
+        pth, "WVASE_example_6nmSiO2_145nmPolymer_70EMA-BG_MultiWavelength.txt"
+    )
+    data = DataSE(dname)
+
+    si = load_material("silicon")
+    sio2 = load_material("silica")
+    polymer = Cauchy(A=1.66, B=0.006)
+    water = load_material("water")
+
+    polymer_layer = polymer(1450)
+    polymer_layer.name = "PNIPAM"
+    polymer_layer.vfsolv.setp(value=0.70)
+
+    struc = water() | polymer_layer | sio2(60) | si()
+    struc.solvent = water
+    struc.ema = "bruggeman"
+    struc.depolarisation_factor = 0.2
+
+    model = ReflectModelSE(struc, delta_offset=0)
+    model._flip_delta = True
+
+    wavelength, aoi, d_psi, d_delta = data.data
+    psi, delta = model(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+
+    assert_allclose(psi, d_psi, rtol=2e-4)
+    assert_allclose(delta, d_delta, rtol=7e-5)
 
 
 def test_smoke_test_a_fit():
