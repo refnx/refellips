@@ -6,7 +6,7 @@ refellips
 .. _GitHub repository:   https://github.com/refnx/refellips
 .. _refnx:   https://github.com/refnx/refnx
 .. _TMM: https://pypi.org/project/tmm/
-.. _Byrnes: https://sjbyrnes.com/
+.. _Steven Byrnes: https://sjbyrnes.com/
 .. _here: https://arxiv.org/abs/1603.02720
 
 `refellips`_ is a Python package designed for the analysis of variable
