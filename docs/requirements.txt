@@ -13,5 +13,5 @@ nbconvert
 jupyter
 matplotlib
 pytest
-refnx
+refnx>=0.1.27
 myst_parser
