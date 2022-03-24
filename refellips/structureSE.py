@@ -600,6 +600,7 @@ class StructureSE(Structure):
 
     def slabs(self, **kwds):
         r"""
+        The slab representation of this structure.
 
         Returns
         -------
