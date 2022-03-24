@@ -3,9 +3,18 @@ from os.path import join as pjoin
 import glob
 import numpy as np
 from numpy.testing import assert_allclose
+from refnx._lib import flatten
 
 import refellips
-from refellips import RI, DataSE, ReflectModelSE, ObjectiveSE, Cauchy
+from refellips import (
+    RI,
+    DataSE,
+    ReflectModelSE,
+    ObjectiveSE,
+    Cauchy,
+    MixedSlabSE,
+    load_material,
+)
 
 
 def test_cauchy_against_wvase():
@@ -51,3 +60,27 @@ def test_dispersions_are_loadable():
     for material in materials:
         _f = RI(material)
         assert len(_f._wav) > 1
+
+
+def test_mixedslab():
+    a = load_material("water")
+    b = Cauchy(A=1.47, B=0.00495)
+
+    slab = MixedSlabSE(10, a, b, 0.5, 3)
+    assert b.A in flatten(slab.parameters)
+    assert slab.slabs().shape == (1, 5)
+    assert_allclose(slab.vf_B.value, 0.5)
+
+    a.wavelength = 400
+    b.wavelength = 400
+    riac = a.complex(400)
+    ribc = b.complex(400)
+
+    slab.vf_B.value = 0
+    assert_allclose(slab.slabs()[0, 1], np.real(riac))
+    assert_allclose(slab.slabs()[0, 2], np.imag(riac))
+
+    slab.vf_B.value = 0.25
+    overall = np.sqrt(0.75 * riac**2 + 0.25 * ribc**2)
+    assert_allclose(slab.slabs()[0, 1], np.real(overall))
+    assert_allclose(slab.slabs()[0, 2], np.imag(overall))
