@@ -336,10 +336,6 @@ class ObjectiveSE(BaseObjective):
         """
         Calculate the log-likelhood of the system.
 
-        The major component of the log-likelhood probability is from the data.
-        Extra potential terms are added on from the Model, `self.model.logp`,
-        and the user specifiable `logp_extra` function.
-
         Parameters
         ----------
         pvals : array-like or refnx.analysis.Parameters
@@ -367,33 +363,41 @@ class ObjectiveSE(BaseObjective):
 
             s_n**2 = y_err**2 + exp(2 * lnsigma) * model**2
 
+        At the moment s_n**2, the variance of the measurement uncertainties,
+        is assumed to be unity. A future release may implement those
+        uncertainties
         """
         self.setp(pvals)
+        wavelength, aoi, psi_d, delta_d = self.data.data
+        wavelength_aoi = np.c_[wavelength, aoi]
 
-        # Not implimented yet - unsure if this can be done given no y errors.
+        psi, delta = self.model(wavelength_aoi)
 
-        raise Exception("logl is not implimented")
+        model = np.r_[psi, delta]
 
-    def nll(self, pvals=None):
-        """
-        Negative log-likelihood function
+        logl = 0.0
 
-        Parameters
-        ----------
-        pvals : array-like or refnx.analysis.Parameters
-            values for the varying or entire set of parameters
+        # TODO investigate ellipsometry uncertainties
+        # here just set it to unity
+        y_err = 1
+        if self.lnsigma is not None:
+            var_y = (
+                y_err * y_err + np.exp(2 * float(self.lnsigma)) * model * model
+            )
+        else:
+            var_y = y_err**2
 
-        Returns
-        -------
-        nll : float
-            negative log-likelihood (currently just chisqr)
+        # TODO do something sensible coz the data isn't weighted
+        if self.weighted:
+            logl += np.log(2 * np.pi * var_y)
 
-        """
+        logl += (np.r_[psi_d, delta_d] - model) ** 2 / var_y
 
-        # TODO - handle logl properly
-        self.setp(pvals)
-        # return -self.logl()
-        return self.chisqr()
+        # nans play havoc
+        if np.isnan(logl).any():
+            raise RuntimeError("ObjectiveSE.logl encountered a NaN.")
+
+        return -0.5 * np.sum(logl)
 
     def logpost(self, pvals=None):
         """
