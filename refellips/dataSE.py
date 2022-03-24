@@ -285,7 +285,7 @@ def open_EP4file(fname, reflect_delta=False):
 
     """
     df = pd.read_csv(fname, sep="\t", skiprows=[1])
-    df = df.dropna(0, how="any")
+    df = df.dropna(axis=0, how="any")
 
     try:
         df["Time"]
