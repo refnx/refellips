@@ -10,6 +10,7 @@ from .structureSE import (
     ComponentSE,
     materials,
     load_material,
+    MixedSlabSE,
 )
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE

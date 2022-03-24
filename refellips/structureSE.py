@@ -465,6 +465,112 @@ class SlabSE(ComponentSE):
         )
 
 
+class MixedSlabSE(ComponentSE):
+    """
+    A slab component made of two materials.
+
+    Parameters
+    ----------
+    thick : refnx.analysis.Parameter or float
+        thickness of slab (Angstrom)
+    ri_A : ScattererSE
+        refractive index of first material
+    ri_B : ScattererSE
+        refractive index of second material
+    vf_B : float
+        volume fraction of B in the layer. Volume fraction of A is calculated
+        as ``1 - vf_B``.
+    rough : refnx.analysis.Parameter or float
+        roughness on top of this slab (Angstrom)
+    name : str
+        Name of this slab
+    interface : {:class:`Interface`, None}, optional
+        The type of interfacial roughness associated with the Slab.
+        If `None`, then the default interfacial roughness is an Error
+        function (also known as Gaussian roughness).
+    """
+
+    def __init__(
+        self,
+        thick,
+        ri_A,
+        ri_B,
+        vf_B,
+        rough,
+        name="",
+        interface=None,
+    ):
+        super().__init__(name=name)
+        self.thick = possibly_create_parameter(
+            thick, name=f"{name} - thick", units="Å"
+        )
+        self.ri_A = ri_A
+        self.ri_B = ri_B
+        self.vf_B = possibly_create_parameter(
+            vf_B, name=f"{name} - vf_B", bounds=(0, 1)
+        )
+
+        self.rough = possibly_create_parameter(
+            rough, name=f"{name} - rough", units="Å"
+        )
+
+        p = Parameters(name=self.name)
+        p.append(self.thick)
+        p.extend(self.ri_A.parameters)
+        p.extend(self.ri_B.parameters)
+        p.append(self.vf_B)
+        p.append(self.rough)
+        self._parameters = p
+        self.interfaces = interface
+
+    def __repr__(self):
+        return (
+            f"MixedSlabSE({self.thick!r}, {self.ri_A!r}, {self.ri_B!r},"
+            f" {self.vf_B!r}, {self.rough!r}, name={self.name!r},"
+            f" interface={self.interfaces!r})"
+        )
+
+    def __str__(self):
+        return str(self.parameters)
+
+    @property
+    def parameters(self):
+        """
+        :class:`refnx.analysis.Parameters` associated with this component
+
+        """
+        self._parameters.name = self.name
+        return self._parameters
+
+    def slabs(self, structure=None):
+        """
+        Slab representation of this component. See :class:`Component.slabs`
+        """
+        wavelength = getattr(structure, "wavelength", None)
+        if self.ri_A.dispersive:
+            riac = self.ri_A.complex(wavelength)
+        else:
+            riac = complex(self.ri_A)
+
+        if self.ri_B.dispersive:
+            ribc = self.ri_B.complex(wavelength)
+        else:
+            ribc = complex(self.ri_B)
+
+        ema = getattr(structure, "ema", "linear")
+        dp = getattr(structure, "depolarisation_factor", 1 / 3)
+
+        slabs = np.zeros((1, 5))
+        N_avg = overall_ri(
+            riac, ribc, vf_B=self.vf_B.value, ema=ema, depolarisation_factor=dp
+        )
+        slabs[0, 0] = self.thick.value
+        slabs[0, 1] = np.real(N_avg)
+        slabs[0, 2] = np.imag(N_avg)
+        slabs[0, 3] = self.rough.value
+        return slabs
+
+
 class StructureSE(Structure):
     """
     Represents the interfacial Structure of an Ellipsometry sample.
