@@ -77,6 +77,7 @@ class DataSE(object):
         self._aoi = np.zeros(0)
         self._psi = np.zeros(0)
         self._delta = np.zeros(0)
+        # TODO when we come up with measurement uncertainties change this.
         self.weighted = False
         self.name = name
 
