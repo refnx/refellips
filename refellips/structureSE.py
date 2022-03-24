@@ -910,7 +910,7 @@ class StructureSE(Structure):
             solv,
             vf_B=vf,
             ema=self.ema,
-            depolarisation_factor=self.depolarisation_factor
+            depolarisation_factor=self.depolarisation_factor,
         )
         slabs[..., 1] = np.real(N_avg)
         slabs[..., 2] = np.imag(N_avg)
@@ -918,9 +918,7 @@ class StructureSE(Structure):
         return slabs
 
 
-def overall_ri(
-    ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3
-):
+def overall_ri(ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3):
     """
     Calculates the overall refractive index of two materials.
 
