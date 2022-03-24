@@ -902,63 +902,68 @@ class StructureSE(Structure):
         if isinstance(solvent, ScattererSE):
             solv = solvent.complex(self.wavelength)
 
-        return overall_RI(
-            slabs,
+        vf = slabs[..., 4]
+        N = slabs[..., 1] + slabs[..., 2] * 1j
+
+        N_avg = overall_ri(
+            N,
             solv,
+            vf_B=vf,
             ema=self.ema,
             depolarisation_factor=self.depolarisation_factor,
         )
+        slabs[..., 1] = np.real(N_avg)
+        slabs[..., 2] = np.imag(N_avg)
+
+        return slabs
 
 
-def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
+def overall_ri(ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3):
     """
-    Calculates the overall refractive index of the material and solvent RI
-    in a layer.
+    Calculates the overall refractive index of two materials.
 
     Parameters
     ----------
-    slabs : np.ndarray
-        Slab representation of the layers to be averaged.
-    solvent : complex or RI
-        RI of solvating material.
+    ri_A: complex, array-like
+        RI of material A
+    ri_B: complex
+        RI of material B
+    vf_B: float, optional
+        volume fraction of material B. The volume fraction of A is calculated
+        as ``1 - vf_B``.
     ema : {'linear', 'maxwell-garnett', 'bruggeman'}
-        Specifies how refractive indices are mixed together. Further
-        details in the `slabs` method.
-    depolar : float
+        Specifies how refractive indices are mixed together.
+    depolarisation_factor : float, optional
         Depolarisation factor. Default is 1/3.
+
     Returns
     -------
-    averaged_slabs : np.ndarray
-        the averaged slabs.
+    ri_avg : complex
+        the averaged material RI
     """
-    vf = slabs[..., 4]
-    solvent = complex(solvent)
-
-    # N = n + ik
-    N = slabs[..., 1] + slabs[..., 2] * 1j
-
     # E is the complex dielectric function
-    E = np.power(N, 2)
+    E_a = np.power(ri_A, 2)
+    E_b = np.power(ri_B, 2)
 
     if ema == "linear":
-        E = (1 - vf) * E + vf * (solvent**2)
+        E_avg = (1 - vf_B) * E_a + vf_B * E_b
 
     elif ema == "maxwell-garnett":
-        top = E + (depolarisation_factor * (1 - vf) + vf) * (solvent**2 - E)
-        bottom = E + depolarisation_factor * (1 - vf) * (solvent**2 - E)
+        top = E_a + (depolarisation_factor * (1 - vf_B) + vf_B) * (E_b - E_a)
+        bottom = E_a + depolarisation_factor * (1 - vf_B) * (E_b - E_a)
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
             v = top / bottom
             v = np.where(np.isfinite(v), v, 0)
-            E = E * v
+            E_avg = E_a * v
 
     elif ema == "bruggeman":
         # The solution to the Bruggeman EMA method is solved using the
         # quadratic equation, only one of which is physically reasonable.
 
-        b = E * ((1 - vf) - depolarisation_factor) + solvent**2 * (
-            vf - depolarisation_factor
+        b = E_a * ((1 - vf_B) - depolarisation_factor) + E_b * (
+            vf_B - depolarisation_factor
         )
 
         with warnings.catch_warnings():
@@ -969,16 +974,12 @@ def overall_RI(slabs, solvent, ema="linear", depolarisation_factor=1 / 3):
                     b**2
                     - 4
                     * (depolarisation_factor - 1)
-                    * (E * solvent**2 * depolarisation_factor)
+                    * (E_a * E_b * depolarisation_factor)
                 )
             ) / (2 * (1 - depolarisation_factor))
-            E = np.where(np.isfinite(v), v, 0)
-
+            E_avg = np.where(np.isfinite(v), v, 0)
     else:
         raise RuntimeError("No other method of mixing is known")
 
-    N = np.sqrt(E)
-    slabs[..., 1] = np.real(N)
-    slabs[..., 2] = np.imag(N)
-
-    return slabs
+    ri_avg = np.sqrt(E_avg)
+    return ri_avg
