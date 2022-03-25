@@ -8,6 +8,7 @@ scipy
 numpy
 sphinx
 pandas
+jinja2<3.1.0  # temporary fix for jinja2/nbconvert bug
 numpydoc
 nbconvert
 jupyter
