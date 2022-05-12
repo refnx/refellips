@@ -1,3 +1,4 @@
 [project]
 requires-python = ">=3.7"
 name = "refellips"
+dynamic=["version", "description", "readme", "license", "classifiers", "urls", "authors"]
