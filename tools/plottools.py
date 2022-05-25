@@ -56,9 +56,13 @@ def plot_ellipsdata(
     elif model != None:
         assert data != None, "If you supply a model, you must also supply data"
     else:
-        assert data != None, "must supply at least one of data, model or objective"
+        assert (
+            data != None
+        ), "must supply at least one of data, model or objective"
 
-    assert xaxis == "aoi" or xaxis == "wavelength", "xaxis must be 'aoi' or 'wavelength"
+    assert (
+        xaxis == "aoi" or xaxis == "wavelength"
+    ), "xaxis must be 'aoi' or 'wavelength"
 
     axt = ax.twinx()
 
@@ -76,15 +80,17 @@ def plot_ellipsdata(
 
     elif xaxis == "wavelength":
         unique_aois = np.unique(data.aoi)
-        wavs = np.linspace(np.min(data.wavelength) - 50, np.max(data.wavelength) + 50)
+        wavs = np.linspace(
+            np.min(data.wavelength) - 50, np.max(data.wavelength) + 50
+        )
         x = data.wavelength
 
         if model != None:
             print(x)
             for idx, wav in enumerate(np.unique(data.wavelength)):
-                wavelength, aoi, d_psi, d_delta = list(data.unique_wavelength_data())[
-                    idx
-                ]
+                wavelength, aoi, d_psi, d_delta = list(
+                    data.unique_wavelength_data()
+                )[idx]
 
                 psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
                 ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
@@ -103,7 +109,11 @@ def plot_ellipsdata(
 
 
 def plot_structure(
-    ax, objective=None, structure=None, reverse_structure=False, plot_labels=True
+    ax,
+    objective=None,
+    structure=None,
+    reverse_structure=False,
+    plot_labels=True,
 ):
     """
     Plots refractive index as a function of distance from the substrate.
@@ -141,7 +151,9 @@ def plot_structure(
         structure = objective.model.structure
         wavelengths = np.unique(objective.data.wavelength)
     else:
-        assert structure != None, "you must supply either an objective or structure"
+        assert (
+            structure != None
+        ), "you must supply either an objective or structure"
         wavelengths = [658]
 
     if len(wavelengths) > 1:
@@ -154,7 +166,9 @@ def plot_structure(
     structure.reverse_structure = reverse_structure
 
     for wav, col in zip(wavelengths, colors):
-        ax.plot(*structure.ri_profile(), color=col, alpha=alpha, label=f"{wav} nm")
+        ax.plot(
+            *structure.ri_profile(), color=col, alpha=alpha, label=f"{wav} nm"
+        )
 
     structure.reverse_structure = False
 
