@@ -1090,3 +1090,18 @@ def overall_ri(ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3):
 
     ri_avg = np.sqrt(E_avg)
     return ri_avg
+
+
+def nm_to_eV(nm):
+    """
+    Convert wavelength from nm to eV
+    Visible light has a range of energies from 1.77 (red) to 3.26 (blue) eV
+    """
+    return 1239.841984055 / nm
+
+
+def eV_to_nm(eV):
+    """
+    Convert wavelength from eV to nm
+    """
+    return 1239.841984055 / eV
