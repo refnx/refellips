@@ -1,4 +1,5 @@
 import os.path
+from pathlib import Path
 from os.path import join as pjoin
 import glob
 import numpy as np
@@ -18,6 +19,9 @@ from refellips import (
 )
 
 
+pth = Path(os.path.dirname(os.path.abspath(refellips.__file__)))
+
+
 def test_cauchy_against_wvase():
     # Check the cauchy model behaves as expected
     A = 1.47
@@ -26,8 +30,7 @@ def test_cauchy_against_wvase():
 
     cauchy = Cauchy(A=A, B=B, C=C)
 
-    pth = os.path.dirname(os.path.abspath(__file__))
-    _f = pjoin(pth, "Cauchynk_fromWVASE.txt")
+    _f = pth / "tests" / "Cauchynk_fromWVASE.txt"
     wvase_output = np.loadtxt(_f)
     wavs = wvase_output[:, 0]
     refin = A + B / ((wavs / 1000) ** 2) + C / ((wavs / 1000) ** 4)
@@ -65,12 +68,28 @@ def test_lorentz():
     lo.complex(np.linspace(350, 700, 100))
     lo.epsilon(np.linspace(1, 5))
 
+    data = DataSE(pth / "tests" / "WVASE_lorentz.dat")
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    silica = load_material("silica")
+    film = Lorentz(A, B, E, Einf)
+    s = air | film(1000) | silica(25) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    # these tolerances are much larger than we'd like
+    assert_allclose(psi, data.psi, rtol=0.07)
+    assert_allclose(delta, data.delta, rtol=0.03)
+
 
 def test_dispersions_are_loadable():
     # test that all the bundled dispersion curves are loadable
-    pth = os.path.dirname(os.path.abspath(refellips.__file__))
-    pth = pjoin(pth, "materials")
-    materials = glob.glob(pjoin(pth, "*.csv"))
+    materials = glob.glob(str(pth / "materials" / "*.csv"))
     for material in materials:
         _f = RI(material)
         assert len(_f._wav) > 1

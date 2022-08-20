@@ -40,6 +40,7 @@ import os
 import os.path
 import warnings
 import glob
+from pathlib import PurePath
 
 from refnx.reflect.structure import (
     Scatterer,
@@ -133,7 +134,7 @@ class RI(ScattererSE):
 
     Parameters
     ----------
-    dispersion : {str, tuple, np.ndarray)
+    dispersion : {str, Path, tuple, np.ndarray)
         If a string then a dispersion curve will be loaded from a file that
         the string points to. The file is assumed to be of CSV format, with the
         first column holding the wavelength (in *microns*), with the second
@@ -171,7 +172,7 @@ class RI(ScattererSE):
             raise RuntimeError("dispersion must be specified")
 
         if dispersion is not None:
-            if type(dispersion) is str:
+            if type(dispersion) is str or isinstance(dispersion, PurePath):
                 if not len(name):
                     # if there is no name get it from the path
                     name = os.path.basename(dispersion).split(".")[0]
@@ -803,6 +804,12 @@ class StructureSE(Structure):
                 "You can only add ComponentSE objects to a structure"
             )
         super().append(item)
+
+    def reflectivity(self):
+        raise NotImplementedError(
+            "Use refellips.ReflectModelSE to calculate ellipsometric"
+            " parameters"
+        )
 
     def slabs(self, **kwds):
         r"""
