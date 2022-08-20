@@ -424,13 +424,11 @@ class Gauss(ScattererSE):
     Parameters
     ----------
     Am: {float, Parameter, sequence}
-        Amplitude of Lorentzian
+        Amplitude of Gaussian
     Br: {float, Parameter, sequence}
         Broadening of oscillator
     En: {float, Parameter, sequence}
         Centre energy of oscillator (eV)
-    Einf: {float, Parameter}
-        Offset term
     wavelength : float
         default wavelength for calculation (nm)
     name : str, optional
@@ -438,7 +436,7 @@ class Gauss(ScattererSE):
 
     Notes
     -----
-    Calculates dispersion curves for *k* oscillators, as implemented in WVASE.
+    Calculates dispersion curves for *k* Gaussian oscillators.
     The model is Kramers-Kronig consistent.
     The paramers for constructing this object should have
     `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
@@ -458,8 +456,6 @@ class Gauss(ScattererSE):
             raise ValueError("A, B, E all have to be the same length")
 
         self._parameters.extend([self.Am, self.Br, self.En])
-        self.Einf = possibly_create_parameter(Einf)
-        self._parameters.append(self.Einf)
 
     @property
     def parameters(self):
