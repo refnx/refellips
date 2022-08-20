@@ -7,6 +7,7 @@ A basic representation of a 1D dataset
 import numpy as np
 import pandas as pd
 from refnx._lib import possibly_open_file
+from pathlib import PurePath
 
 pd.options.mode.chained_assignment = None
 
@@ -17,7 +18,7 @@ class DataSE(object):
 
     Parameters
     ----------
-    data : str, file-like or tuple of np.ndarray, optional
+    data : {str, file-like, Path, tuple of np.ndarray}, optional
         String pointing to a data file.
         Alternatively it is a tuple containing the data from which the dataset
         will be constructed. The tuple should have 4 members.
@@ -82,7 +83,11 @@ class DataSE(object):
         self.name = name
 
         # If a file, then open and load the file.
-        if hasattr(data, "read") or type(data) is str:
+        if (
+            hasattr(data, "read")
+            or type(data) is str
+            or isinstance(data, PurePath)
+        ):
             self.load(data)
             self.filename = data
 

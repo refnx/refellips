@@ -7,6 +7,7 @@ from .structureSE import (
     StructureSE,
     SlabSE,
     Cauchy,
+    Lorentz,
     ComponentSE,
     materials,
     load_material,
