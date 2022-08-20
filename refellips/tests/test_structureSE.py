@@ -14,6 +14,7 @@ from refellips import (
     ObjectiveSE,
     Cauchy,
     Lorentz,
+    Gauss,
     MixedSlabSE,
     load_material,
 )
@@ -65,6 +66,7 @@ def test_lorentz():
     assert len(lo.Am) == 2
 
     lo.complex(500)
+    lo.complex(None)
     lo.complex(np.linspace(350, 700, 100))
     lo.epsilon(np.linspace(1, 5))
 
@@ -85,6 +87,20 @@ def test_lorentz():
     # these tolerances are much larger than we'd like
     assert_allclose(psi, data.psi, rtol=0.07)
     assert_allclose(delta, data.delta, rtol=0.03)
+
+
+def test_gauss():
+    # TODO use actual values from WVASE
+    # this is more of a smoke test
+    A = [1]
+    B = [0.5]
+    E = [2.5]
+    Einf = 1
+    g = Gauss(A, B, E, Einf)
+
+    g.complex(500)
+    g.complex(np.linspace(350, 700, 100))
+    g.epsilon(np.linspace(1, 5))
 
 
 def test_dispersions_are_loadable():

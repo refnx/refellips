@@ -347,7 +347,7 @@ class Cauchy(ScattererSE):
 
 
 class Lorentz(ScattererSE):
-    """
+    r"""
     Dispersion curves for Lorentz oscillators.
 
     Parameters
@@ -412,9 +412,11 @@ class Lorentz(ScattererSE):
         E = np.array(self.En)
         _e = np.asfarray(energy)
         v = A[:, None] / (E[:, None] ** 2 - _e**2 - 1j * B[:, None] * _e)
-        r = np.sum(v, axis=0) + self.Einf.value
+        r = np.atleast_1d(np.sum(v, axis=0) + self.Einf.value)
+
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
+
         return r
 
 
@@ -476,17 +478,20 @@ class Gauss(ScattererSE):
         # TODO cache if params don't change
         _e_pad = np.linspace(-20, 20, 2048)
         sigma = B / 2 / np.sqrt(np.log(2))
-        e2 = A[:, None] * np.exp(-((_e_pad - E[:, None]) / sigma[:, None]) ** 2)
-        e2 -= A[:, None] * np.exp(-((_e_pad + E[:, None]) / sigma[:, None]) ** 2)
+        e2 = A[:, None] * np.exp(
+            -(((_e_pad - E[:, None]) / sigma[:, None]) ** 2)
+        )
+        e2 -= A[:, None] * np.exp(
+            -(((_e_pad + E[:, None]) / sigma[:, None]) ** 2)
+        )
         e2 = np.sum(e2, axis=0)
         # e1 is Kramers-Kronig consistent via Hilbert transform
-        e1 = ft.hilbert(e2) + 1.0
+        e1 = ft.hilbert(e2) + self.Einf.value
 
         # (linearly) interpolate to find epsilon at given energy
         _e1 = np.interp(energies, _e_pad, e1)
         _e2 = np.interp(energies, _e_pad, e2)
-        r = np.sqrt(_e1 + 1J * _e2)
-
+        r = np.atleast_1d(np.sqrt(_e1 + 1j * _e2))
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
         return r
