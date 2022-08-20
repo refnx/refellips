@@ -12,6 +12,7 @@ from refellips import (
     ReflectModelSE,
     ObjectiveSE,
     Cauchy,
+    Lorentz,
     MixedSlabSE,
     load_material,
 )
@@ -50,6 +51,19 @@ def test_RI_from_array():
     assert_allclose(_f._wav[0], 1000.0)
     ri = _f.complex(2000.0)
     assert_allclose(ri, complex(ri_in[1], ec_in[1]))
+
+
+def test_lorentz():
+    A = [5, 10]
+    B = [0.25, 0.5]
+    E = [2, 4]
+    Einf = 2
+    lo = Lorentz(A, B, E, Einf)
+    assert len(lo.Am) == 2
+
+    lo.complex(500)
+    lo.complex(np.linspace(350, 700, 100))
+    lo.epsilon(np.linspace(1, 5))
 
 
 def test_dispersions_are_loadable():

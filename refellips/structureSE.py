@@ -48,7 +48,12 @@ from refnx.reflect.structure import (
     Component,
     sld_profile,
 )
-from refnx.analysis import Parameters, Parameter, possibly_create_parameter
+from refnx.analysis import (
+    Parameters,
+    Parameter,
+    possibly_create_parameter,
+    sequence_to_parameters,
+)
 from refnx._lib import flatten
 from refnx.reflect import _reflect as refcalc
 
@@ -314,6 +319,101 @@ class Cauchy(ScattererSE):
             + (self.C.value * 1000**4) / (wav**4)
         )
         return real + 1j * 0.0
+
+
+class Lorentz(ScattererSE):
+    """
+    Dispersion curves for Lorentz oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter, sequence}
+        Amplitude of Lorentzian
+    Br: {float, Parameter, sequence}
+        Broadening of oscillator
+    En: {float, Parameter, sequence}
+        Centre energy of oscillator (eV)
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves for *k* oscillators, as implemented in WVASE.
+    The model is Kramers-Kronig consistent.
+    The paramers for constructing this object should have
+    `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
+
+    ..math::
+
+    \tilde{\varepsilon}(h\nu)=\varepsilon_{1\infty }+\sum_{k}\frac{A_{k}}{E_{k}^2 - (h\nu)^2-iB_kh\nu}
+
+    Examples
+    --------
+    >>> # Create a single Lorentz oscillator
+    >>> Lorentz(5, 0.25, 2, Einf=1)
+    >>> # Create a 2 oscillator dispersion curve
+    >>> lo = Lorentz([5, 10], [0.25, 0.5], [2, 4], Einf=2)
+    >>> lo.complex(658)  # calculates the refractive index at 658 nm.
+    """
+
+    def __init__(self, Am, Br, En, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self._parameters = Parameters(name=name)
+        self.Am = sequence_to_parameters([Am])
+        self.Br = sequence_to_parameters([Br])
+        self.En = sequence_to_parameters([En])
+        if not (len(self.Am) == len(self.Br) == len(self.En)):
+            raise ValueError("A, B, E all have to be the same length")
+
+        self._parameters.extend([self.Am, self.Br, self.En])
+        self.Einf = possibly_create_parameter(Einf)
+        self._parameters.append(self.Einf)
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def epsilon(self, energy):
+        """
+        The complex dielectric function for the oscillator
+        """
+        A = np.array(self.Am)
+        B = np.array(self.Br)
+        E = np.array(self.En)
+        _e = np.asfarray(energy)
+        v = A[:, None] / (E[:, None] ** 2 - _e**2 - 1j * B[:, None] * _e)
+        r = np.sum(v, axis=0) + self.Einf.value
+        if np.isscalar(energy) and len(r) == 1:
+            return r[0]
+        return r
+
+    def complex(self, wavelength):
+        """
+        Calculate a complex RI
+
+        Parameters
+        ----------
+        wavelength : float
+            wavelength of light in nm
+
+        Returns
+        -------
+        RI : complex
+            refractive index and extinction coefficient
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # convert wavelengths to eV
+        energies = nm_to_eV(wavelength)
+        dispersion = self.epsilon(energies)
+        return np.sqrt(dispersion)
 
 
 class ComponentSE(Component):
