@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # -*- coding: utf-8 -*-
 import numpy as np
+import scipy.fftpack as ft
 import os
 import os.path
 import warnings
@@ -455,7 +456,9 @@ class Gauss(ScattererSE):
         if not (len(self.Am) == len(self.Br) == len(self.En)):
             raise ValueError("A, B, E all have to be the same length")
 
+        self.Einf = possibly_create_parameter(Einf)
         self._parameters.extend([self.Am, self.Br, self.En])
+        self._parameters.append(self.Einf)
 
     @property
     def parameters(self):
@@ -468,9 +471,22 @@ class Gauss(ScattererSE):
         A = np.array(self.Am)
         B = np.array(self.Br)
         E = np.array(self.En)
-        _e = np.asfarray(energy)
-        v = A[:, None] / (E[:, None] ** 2 - _e**2 - 1j * B[:, None] * _e)
-        r = np.sum(v, axis=0) + self.Einf.value
+        energies = np.asfarray(energy)
+
+        # TODO cache if params don't change
+        _e_pad = np.linspace(-20, 20, 2048)
+        sigma = B / 2 / np.sqrt(np.log(2))
+        e2 = A[:, None] * np.exp(-((_e_pad - E[:, None]) / sigma[:, None]) ** 2)
+        e2 -= A[:, None] * np.exp(-((_e_pad + E[:, None]) / sigma[:, None]) ** 2)
+        e2 = np.sum(e2, axis=0)
+        # e1 is Kramers-Kronig consistent via Hilbert transform
+        e1 = ft.hilbert(e2) + 1.0
+
+        # (linearly) interpolate to find epsilon at given energy
+        _e1 = np.interp(energies, _e_pad, e1)
+        _e2 = np.interp(energies, _e_pad, e2)
+        r = np.sqrt(_e1 + 1J * _e2)
+
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
         return r
