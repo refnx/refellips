@@ -57,7 +57,8 @@ def test_RI_from_array():
     assert_allclose(ri, complex(ri_in[1], ec_in[1]))
 
 
-def test_lorentz():
+def test_lorentz_against_wvase():
+    # Check the Lorentz model behaves as expected
     A = [5, 10]
     B = [0.25, 0.5]
     E = [2, 4]
@@ -65,28 +66,15 @@ def test_lorentz():
     lo = Lorentz(A, B, E, Einf)
     assert len(lo.Am) == 2
 
-    lo.complex(500)
-    lo.complex(None)
-    lo.complex(np.linspace(350, 700, 100))
-    lo.epsilon(np.linspace(1, 5))
+    _f = pth / "tests" / "Lorentznk_fromWVASE.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
 
-    data = DataSE(pth / "tests" / "WVASE_lorentz.dat")
+    refellips_RI_n = [lo.complex(wav).real for wav in wavs]
+    refellips_RI_k = [lo.complex(wav).imag for wav in wavs]
 
-    air = load_material("air")
-    silicon = load_material("silicon")
-    silica = load_material("silica")
-    film = Lorentz(A, B, E, Einf)
-    s = air | film(1000) | silica(25) | silicon()
-    model = ReflectModelSE(s)
-
-    wavelength_aoi = np.c_[
-        data.wavelength, np.full_like(data.wavelength, data.aoi)
-    ]
-    psi, delta = model.model(wavelength_aoi)
-
-    # these tolerances are much larger than we'd like
-    assert_allclose(psi, data.psi, rtol=0.07)
-    assert_allclose(delta, data.delta, rtol=0.03)
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0016)
+    assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0019)
 
 
 def test_gauss():

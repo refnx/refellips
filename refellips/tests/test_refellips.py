@@ -336,3 +336,35 @@ def test_logl():
 
     objective = ObjectiveSE(model, data)
     assert_allclose(objective.logl() / -0.5, objective.chisqr())
+
+
+def test_lorentz():
+    A = [5, 10]
+    B = [0.25, 0.5]
+    E = [2, 4]
+    Einf = 2
+    lo = Lorentz(A, B, E, Einf)
+    assert len(lo.Am) == 2
+
+    h = lo.complex(500)
+    lo.complex(None)
+    lo.complex(np.linspace(350, 850, 100))
+    lo.epsilon(np.linspace(1, 5))
+
+    data = DataSE(pth / "tests" / "WVASE_Lorentz_example_100nmFilm_MultiWavelength.txt")
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    silica = load_material("silica")
+    film = Lorentz(A, B, E, Einf)
+    s = air | film(1000) | silica(25) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    # these tolerances are much larger than we'd like
+    assert_allclose(psi, data.psi, rtol=0.076)
+    assert_allclose(delta, data.delta, rtol=0.03)
