@@ -7,6 +7,9 @@ from refellips import (
     RI,
     Cauchy,
     DataSE,
+    Cauchy,
+    Lorentz,
+    Gauss,
     ReflectModelSE,
     ObjectiveSE,
     SlabSE,
@@ -351,7 +354,7 @@ def test_lorentz():
     lo.complex(np.linspace(350, 850, 100))
     lo.epsilon(np.linspace(1, 5))
 
-    data = DataSE(pth / "tests" / "WVASE_Lorentz_example_100nmFilm_MultiWavelength.txt")
+    data = DataSE(pth / "WVASE_Lorentz_example_100nmFilm_MultiWavelength.txt")
 
     air = load_material("air")
     silicon = load_material("silicon")
