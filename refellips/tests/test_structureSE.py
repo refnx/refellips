@@ -13,6 +13,7 @@ from refellips import (
     ReflectModelSE,
     ObjectiveSE,
     Cauchy,
+    Sellmeier,
     Lorentz,
     Gauss,
     MixedSlabSE,
@@ -36,7 +37,7 @@ def test_cauchy_against_wvase():
     wavs = wvase_output[:, 0]
     refin = A + B / ((wavs / 1000) ** 2) + C / ((wavs / 1000) ** 4)
 
-    refellips_RI = [cauchy.complex(wav).real for wav in wavs]
+    refellips_RI = np.real(cauchy.complex(wavs))
 
     assert_allclose(refellips_RI, wvase_output[:, 1], rtol=0.000001)
     assert_allclose(refellips_RI, refin, rtol=0.000001)
@@ -69,7 +70,7 @@ def test_sellmeier_against_CompleteEase():
     wvase_output = np.loadtxt(_f)
     wavs = wvase_output[:, 0]
 
-    refellips_RI_n = [s.complex(wav).real for wav in wavs]
+    refellips_RI_n = np.real(s.complex(wavs))
 
     assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=6e-7)
 
@@ -87,8 +88,8 @@ def test_lorentz_against_wvase():
     wvase_output = np.loadtxt(_f)
     wavs = wvase_output[:, 0]
 
-    refellips_RI_n = [lo.complex(wav).real for wav in wavs]
-    refellips_RI_k = [lo.complex(wav).imag for wav in wavs]
+    refellips_RI_k = np.imag(lo.complex(wavs))
+    refellips_RI_n = np.real(lo.complex(wavs))
 
     assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0016)
     assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0019)
@@ -107,8 +108,8 @@ def test_gauss_against_CompleteEase():
     wvase_output = np.loadtxt(_f)
     wavs = wvase_output[:, 0]
 
-    refellips_RI_n = [g.complex(wav).real for wav in wavs]
-    refellips_RI_k = [g.complex(wav).imag for wav in wavs]
+    refellips_RI_k = np.imag(g.complex(wavs))
+    refellips_RI_n = np.real(g.complex(wavs))
 
     assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0013)
     assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0047)
