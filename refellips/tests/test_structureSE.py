@@ -77,18 +77,27 @@ def test_lorentz_against_wvase():
     assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0019)
 
 
-def test_gauss():
-    # TODO use actual values from WVASE
-    # this is more of a smoke test
-    A = [1]
-    B = [0.5]
+def test_gauss_against_CompleteEase():
+    # Check the Gauss model behaves as expected
+    A = [0.5]
+    B = [1]
     E = [2.5]
     Einf = 1
     g = Gauss(A, B, E, Einf)
+    g.Am[0].setp(vary=True, bounds=(-5, 5))
+    g.Br[0].setp(vary=True, bounds=(-5, 5))
+    g.En[0].setp(vary=True, bounds=(-5, 5))
+    assert len(g.Am) == 1
 
-    g.complex(500)
-    g.complex(np.linspace(350, 700, 100))
-    g.epsilon(np.linspace(1, 5))
+    _f = pth / "tests" / "Gaussnk_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
+
+    refellips_RI_n = [g.complex(wav).real for wav in wavs]
+    refellips_RI_k = [g.complex(wav).imag for wav in wavs]
+
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0013)
+    assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0047)
 
 
 def test_dispersions_are_loadable():
