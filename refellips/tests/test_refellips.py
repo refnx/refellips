@@ -8,6 +8,7 @@ from refellips import (
     Cauchy,
     DataSE,
     Cauchy,
+    Sellmeier,
     Lorentz,
     Gauss,
     ReflectModelSE,
@@ -341,6 +342,34 @@ def test_logl():
     assert_allclose(objective.logl() / -0.5, objective.chisqr())
 
 
+def test_sellmeier():
+    A = 1
+    E = 2
+    P = 0.01
+    Einf = 1
+    s = Sellmeier(A, E, P, Einf)
+
+    data = DataSE(
+        pth / "WVASE_Sellmeier_example_75nmFilm_MultiWavelength_MultiAngle.txt"
+    )
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    film = Sellmeier(A, E, P, Einf)
+    s = air | film(750) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    assert_allclose(psi, data.psi, rtol=0.011)
+    assert_allclose(delta, data.delta, rtol=0.0022)
+
+    return data.wavelength, psi, delta, data.psi, data.delta
+
+
 def test_lorentz():
     A = [5, 10]
     B = [0.25, 0.5]
@@ -371,3 +400,30 @@ def test_lorentz():
     # these tolerances are much larger than we'd like
     assert_allclose(psi, data.psi, rtol=0.076)
     assert_allclose(delta, data.delta, rtol=0.03)
+
+
+def test_gaussian():
+    A = [0.5]
+    B = [1]
+    E = [2.5]
+    Einf = 1
+    g = Gauss(A, B, E, Einf)
+    assert len(g.Am) == 1
+
+    data = DataSE(
+        pth / "WVASE_Gaussian_example_40nmFilm_MultiWavelength_MultiAngle.txt"
+    )
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    film = Gauss(A, B, E, Einf)
+    s = air | film(400) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    assert_allclose(psi, data.psi, rtol=0.03)
+    assert_allclose(delta, data.delta, rtol=0.007)

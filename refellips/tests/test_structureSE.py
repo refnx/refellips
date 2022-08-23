@@ -59,7 +59,7 @@ def test_RI_from_array():
 
 
 def test_sellmeier_against_CompleteEase():
-    # Check the Gauss model behaves as expected
+    # Check the Sellmeier model behaves as expected
     A = 1
     E = 2
     P = 0.01
