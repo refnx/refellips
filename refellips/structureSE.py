@@ -346,6 +346,86 @@ class Cauchy(ScattererSE):
         return real + 1j * 0.0
 
 
+class Sellmeier(ScattererSE):
+    r"""
+    Dispersion curves for Sellmeier oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter, sequence}
+        Amplitude of Sellmeir
+    En: {float, Parameter, sequence}
+        Center energy of oscillator
+    P: {float, Parameter, sequence}
+        Position of a pole (eV)
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves for *k* oscillators, as implemented in CompleteEase.
+
+    ..math::
+
+    n = \sqrt{ \varepsilon (\infty) + \frac{A \lambda^2}{\lambda^2 - B^2} - E\lambda^2}
+
+    Examples
+    --------
+    >>> # Create a Lorentz oscillator
+    >>> sell = Sellmeier(2, 0.1, 0.11, Einf=1)
+    >>> sell.complex(658)  # calculates the refractive index at 658 nm.
+    """
+
+    def __init__(self, Am, En, P, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self.Am = possibly_create_parameter(Am, name=f"{name} - sellmeier Am")
+        self.En = possibly_create_parameter(En, name=f"{name} - sellmeier En")
+        self.P = possibly_create_parameter(P, name=f"{name} - sellmeier P")
+        self.Einf = possibly_create_parameter(
+            Einf, name=f"{name} - sellmeier Einf"
+        )
+
+        self._parameters = Parameters(name=name)
+        self._parameters.extend([self.Am, self.En, self.P, self.Einf])
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def complex(self, wavelength):
+        """
+        Calculate a complex RI for the given Sellmeier oscillator
+
+        Parameters
+        ----------
+        wavelength : float
+            wavelength of light in nm
+
+        Returns
+        -------
+        RI : complex
+            refractive index and extinction coefficient
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = np.sqrt(
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+        return real + 1j * 0.0
+
+
 class Lorentz(ScattererSE):
     r"""
     Dispersion curves for Lorentz oscillators.

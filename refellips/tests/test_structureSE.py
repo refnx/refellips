@@ -57,6 +57,23 @@ def test_RI_from_array():
     assert_allclose(ri, complex(ri_in[1], ec_in[1]))
 
 
+def test_sellmeier_against_CompleteEase():
+    # Check the Gauss model behaves as expected
+    A = 1
+    E = 2
+    P = 0.01
+    Einf = 1
+    s = Sellmeier(A, E, P, Einf)
+
+    _f = pth / "tests" / "Sellmeiernk_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
+
+    refellips_RI_n = [s.complex(wav).real for wav in wavs]
+
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=6e-7)
+
+
 def test_lorentz_against_wvase():
     # Check the Lorentz model behaves as expected
     A = [5, 10]
