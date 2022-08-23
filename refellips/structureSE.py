@@ -630,7 +630,9 @@ class SlabSE(ComponentSE):
         if self.ri.dispersive:
             ric = self.ri.complex(getattr(structure, "wavelength", None))
         else:
-            ric = complex(self.ri)
+            ric = self.ri
+
+        ric = complex(ric)
 
         return np.array(
             [
