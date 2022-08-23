@@ -84,9 +84,6 @@ def test_gauss_against_CompleteEase():
     E = [2.5]
     Einf = 1
     g = Gauss(A, B, E, Einf)
-    g.Am[0].setp(vary=True, bounds=(-5, 5))
-    g.Br[0].setp(vary=True, bounds=(-5, 5))
-    g.En[0].setp(vary=True, bounds=(-5, 5))
     assert len(g.Am) == 1
 
     _f = pth / "tests" / "Gaussnk_fromCompleteEase.txt"
