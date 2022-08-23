@@ -353,7 +353,7 @@ class Sellmeier(ScattererSE):
     Parameters
     ----------
     Am: {float, Parameter, sequence}
-        Amplitude of Sellmeir
+        Amplitude of Sellmeier
     En: {float, Parameter, sequence}
         Center energy of oscillator
     P: {float, Parameter, sequence}
@@ -375,7 +375,7 @@ class Sellmeier(ScattererSE):
 
     Examples
     --------
-    >>> # Create a Lorentz oscillator
+    >>> # Create a Sellmeier oscillator
     >>> sell = Sellmeier(2, 0.1, 0.11, Einf=1)
     >>> sell.complex(658)  # calculates the refractive index at 658 nm.
     """
