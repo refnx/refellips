@@ -352,12 +352,12 @@ class Sellmeier(ScattererSE):
 
     Parameters
     ----------
-    Am: {float, Parameter, sequence}
-        Amplitude of Sellmeier
-    En: {float, Parameter, sequence}
-        Center energy of oscillator
-    P: {float, Parameter, sequence}
-        Position of a pole (eV)
+    Am: {float, Parameter}
+        Amplitude of Sellmeier in μm.
+    En: {float, Parameter}
+        Center energy of oscillator in μm.
+    P: {float, Parameter}
+        Position of a pole in μm.
     Einf: {float, Parameter}
         Offset term
     wavelength : float
@@ -367,11 +367,12 @@ class Sellmeier(ScattererSE):
 
     Notes
     -----
-    Calculates dispersion curves for *k* oscillators, as implemented in CompleteEase.
+    Calculates dispersion curves of a Sellmeier oscillator as implemented in CompleteEase.
+    CompleteEase Manual, Chapter 9, pg 9-306, J.A. Woollam Co., 2014.
 
     ..math::
 
-    n = \sqrt{ \varepsilon (\infty) + \frac{A \lambda^2}{\lambda^2 - B^2} - E\lambda^2}
+    n = \sqrt{ \varepsilon (\infty) + \frac{Am \lambda^2}{\lambda^2 - En^2} - P\lambda^2}
 
     Examples
     --------
@@ -424,6 +425,25 @@ class Sellmeier(ScattererSE):
             - (self.P.value * wav**2)
         )
         return real + 1j * 0.0
+
+    def epsilon(self, wavelength):
+        """
+        The complex dielectric function for the oscillator
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = (
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+
+        return real + 1j * 0
 
 
 class Lorentz(ScattererSE):
