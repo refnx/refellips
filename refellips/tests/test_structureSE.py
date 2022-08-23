@@ -13,6 +13,7 @@ from refellips import (
     ReflectModelSE,
     ObjectiveSE,
     Cauchy,
+    Sellmeier,
     Lorentz,
     Gauss,
     MixedSlabSE,
@@ -36,7 +37,7 @@ def test_cauchy_against_wvase():
     wavs = wvase_output[:, 0]
     refin = A + B / ((wavs / 1000) ** 2) + C / ((wavs / 1000) ** 4)
 
-    refellips_RI = [cauchy.complex(wav).real for wav in wavs]
+    refellips_RI = np.real(cauchy.complex(wavs))
 
     assert_allclose(refellips_RI, wvase_output[:, 1], rtol=0.000001)
     assert_allclose(refellips_RI, refin, rtol=0.000001)
@@ -57,7 +58,25 @@ def test_RI_from_array():
     assert_allclose(ri, complex(ri_in[1], ec_in[1]))
 
 
-def test_lorentz():
+def test_sellmeier_against_CompleteEase():
+    # Check the Sellmeier model behaves as expected
+    A = 1
+    E = 2
+    P = 0.01
+    Einf = 1
+    s = Sellmeier(A, E, P, Einf)
+
+    _f = pth / "tests" / "Sellmeiernk_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
+
+    refellips_RI_n = np.real(s.complex(wavs))
+
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=6e-7)
+
+
+def test_lorentz_against_wvase():
+    # Check the Lorentz model behaves as expected
     A = [5, 10]
     B = [0.25, 0.5]
     E = [2, 4]
@@ -65,42 +84,35 @@ def test_lorentz():
     lo = Lorentz(A, B, E, Einf)
     assert len(lo.Am) == 2
 
-    lo.complex(500)
-    lo.complex(None)
-    lo.complex(np.linspace(350, 700, 100))
-    lo.epsilon(np.linspace(1, 5))
+    _f = pth / "tests" / "Lorentznk_fromWVASE.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
 
-    data = DataSE(pth / "tests" / "WVASE_lorentz.dat")
+    refellips_RI_k = np.imag(lo.complex(wavs))
+    refellips_RI_n = np.real(lo.complex(wavs))
 
-    air = load_material("air")
-    silicon = load_material("silicon")
-    silica = load_material("silica")
-    film = Lorentz(A, B, E, Einf)
-    s = air | film(1000) | silica(25) | silicon()
-    model = ReflectModelSE(s)
-
-    wavelength_aoi = np.c_[
-        data.wavelength, np.full_like(data.wavelength, data.aoi)
-    ]
-    psi, delta = model.model(wavelength_aoi)
-
-    # these tolerances are much larger than we'd like
-    assert_allclose(psi, data.psi, rtol=0.07)
-    assert_allclose(delta, data.delta, rtol=0.03)
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0016)
+    assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0019)
 
 
-def test_gauss():
-    # TODO use actual values from WVASE
-    # this is more of a smoke test
-    A = [1]
-    B = [0.5]
+def test_gauss_against_CompleteEase():
+    # Check the Gauss model behaves as expected
+    A = [0.5]
+    B = [1]
     E = [2.5]
     Einf = 1
     g = Gauss(A, B, E, Einf)
+    assert len(g.Am) == 1
 
-    g.complex(500)
-    g.complex(np.linspace(350, 700, 100))
-    g.epsilon(np.linspace(1, 5))
+    _f = pth / "tests" / "Gaussnk_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    wavs = wvase_output[:, 0]
+
+    refellips_RI_k = np.imag(g.complex(wavs))
+    refellips_RI_n = np.real(g.complex(wavs))
+
+    assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0013)
+    assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0047)
 
 
 def test_dispersions_are_loadable():

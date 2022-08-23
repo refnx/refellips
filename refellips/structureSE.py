@@ -346,6 +346,106 @@ class Cauchy(ScattererSE):
         return real + 1j * 0.0
 
 
+class Sellmeier(ScattererSE):
+    r"""
+    Dispersion curves for Sellmeier oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter}
+        Amplitude of Sellmeier in μm.
+    En: {float, Parameter}
+        Center energy of oscillator in μm.
+    P: {float, Parameter}
+        Position of a pole in μm.
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves of a Sellmeier oscillator as implemented in CompleteEase.
+    CompleteEase Manual, Chapter 9, pg 9-306, J.A. Woollam Co., 2014.
+
+    ..math::
+
+    n = \sqrt{ \varepsilon (\infty) + \frac{Am \lambda^2}{\lambda^2 - En^2} - P\lambda^2}
+
+    Examples
+    --------
+    >>> # Create a Sellmeier oscillator
+    >>> sell = Sellmeier(2, 0.1, 0.11, Einf=1)
+    >>> sell.complex(658)  # calculates the refractive index at 658 nm.
+    """
+
+    def __init__(self, Am, En, P, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self.Am = possibly_create_parameter(Am, name=f"{name} - sellmeier Am")
+        self.En = possibly_create_parameter(En, name=f"{name} - sellmeier En")
+        self.P = possibly_create_parameter(P, name=f"{name} - sellmeier P")
+        self.Einf = possibly_create_parameter(
+            Einf, name=f"{name} - sellmeier Einf"
+        )
+
+        self._parameters = Parameters(name=name)
+        self._parameters.extend([self.Am, self.En, self.P, self.Einf])
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def complex(self, wavelength):
+        """
+        Calculate a complex RI for the given Sellmeier oscillator
+
+        Parameters
+        ----------
+        wavelength : float
+            wavelength of light in nm
+
+        Returns
+        -------
+        RI : complex
+            refractive index and extinction coefficient
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = np.sqrt(
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+        return real + 1j * 0.0
+
+    def epsilon(self, wavelength):
+        """
+        The complex dielectric function for the oscillator
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = (
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+
+        return real + 1j * 0
+
+
 class Lorentz(ScattererSE):
     r"""
     Dispersion curves for Lorentz oscillators.
@@ -491,7 +591,7 @@ class Gauss(ScattererSE):
         # (linearly) interpolate to find epsilon at given energy
         _e1 = np.interp(energies, _e_pad, e1)
         _e2 = np.interp(energies, _e_pad, e2)
-        r = np.atleast_1d(np.sqrt(_e1 + 1j * _e2))
+        r = np.atleast_1d(_e1 + 1j * _e2)
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
         return r

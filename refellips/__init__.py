@@ -7,6 +7,7 @@ from .structureSE import (
     StructureSE,
     SlabSE,
     Cauchy,
+    Sellmeier,
     Lorentz,
     Gauss,
     ComponentSE,
