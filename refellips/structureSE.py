@@ -491,7 +491,7 @@ class Gauss(ScattererSE):
         # (linearly) interpolate to find epsilon at given energy
         _e1 = np.interp(energies, _e_pad, e1)
         _e2 = np.interp(energies, _e_pad, e2)
-        r = np.atleast_1d(np.sqrt(_e1 + 1j * _e2))
+        r = np.atleast_1d(_e1 + 1j * _e2)
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
         return r
