@@ -9,6 +9,9 @@ Frequently Asked Questions
 .. _Markel: https://doi.org/10.1364/JOSAA.33.001244
 .. _Humlicek: https://doi.org/10.1007/978-3-642-33956-1_3
 .. _getting started: getting_started.ipynb#Saving-the-objective
+.. _User defined oscillator: https://nbviewer.org/github/refnx/refellips/blob/master/demos/refellipsDemo_UserDefinedOscillator.ipynb
+.. _Cauchy, Sellmeier: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Cauchy_and_related_empirical_dispersion_Formulae_for_Transparent_Materials.pdf
+.. _Lorentz: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Lorentz_Dispersion_Model.pdf
 
 A list of common questions.
 
@@ -40,23 +43,24 @@ What formats/types of ellipsometry data does *refellips* handle?
 ----------------------------------------------------------------
 
 *refellips* has the capability of loading data directly from both Accurion EP3
-and EP4 ellipsometers, as well Horiba ellipsometers using the `open_EP4file`
-and `open_HORIBAfile` functions, respectively.
+and EP4 ellipsometers, as well Horiba ellipsometers using the
+:func:`~refellips.dataSE.open_EP4file` and
+:func:`~refellips.dataSE.open_HORIBAfile` functions, respectively.
 
 Alternatively, users also have the option to load-in other datasets using
-`DataSE`. Files loaded using `DataSE` must contain four columns (with header):
-wavelength, angle of incidence, psi and delta.
+:class:`~refellips.dataSE.DataSE`. Files loaded using `DataSE` must contain
+four columns (with header): wavelength, angle of incidence, psi and delta.
 
 
 Where do I find dispersion curves for a material?
 -------------------------------------------------
 
 *refellips* contains preloaded dispersion curves for select materials, which
-are accessible by the `load_material` function. These materials are sourced
-from `refractiveindex.info`_, and include air, a void, water,
-dimethyl sulfoxide, silicon, silica, gold, aluminium oxide, polystyrene,
-poly(N-isopropylacrylamide) (PNIPAM) and a material that represents a diffuse
-polymer.
+are accessible by the :func:`~refellips.structureSE.load_material` function.
+These materials are sourced from `refractiveindex.info`_, and include air,
+a void, water, dimethyl sulfoxide, silicon, silica, gold, aluminium oxide,
+polystyrene, poly(N-isopropylacrylamide) (PNIPAM) and a material that
+represents a diffuse polymer.
 
 If required, users can download their own dispersion curves from
 `refractiveindex.info`_ and load them into *refellips* using::
@@ -69,16 +73,47 @@ If three columns are provided, the third is loaded as the extinction coefficient
 The *refellips* maintainers are happy to include additional dispersion curves
 with the package; please ask if you'd like this to happen.
 
-Alternatively, users have the option to specify Cauchy parameters (a,b,c) for their
-material::
+Alternatively, users have the option to choose from any of the in-built oscillator
+functions to model the optical properties of their material:
+:class:`~refellips.structureSE.Cauchy`, :class:`~refellips.structureSE.Sellmeier`,
+:class:`~refellips.structureSE.Lorentz` and :class:`~refellips.structureSE.Gauss`.
+Both the `Cauchy` and `Sellmeier` oscillators monotonically decrease in refractive
+index with increasing wavelength and are therefore not Kramers-Kronig consistent.
+These optical models are frequently used to model the optical properties of
+transparent materials, however, the Sellmeier is more accurate at higher
+wavelengths, i.e., the infra-red region. Users can specify `Cauchy` and `Sellmeier`
+parameters for their material::
 
-    my_material = Cauchy(A=a, B=b, C=c)
+    my_cauchy_material = Cauchy(A=a, B=b, C=c)
+    my_sellmeier_material = Sellmeier(Am, En, P, Einf)
 
-or simply a refractive index (n) and extinction coefficent (k) for a single
-wavelength measurement::
+Both the `Lorentz` and `Gaussian` functions are Kramers-Kronig consistent, and allow
+users to implement multiple oscillators. `Lorentz` oscillators are typically employed
+when working with materials above the fundamental band gap, describing well the optical
+properties of transparent and weakly absorbing materials. `Gaussian` oscillators are
+typically used for absorbing materials, where the complex component models the Gaussian
+absorption and the real component is its Kramers-Kronig relation (a Hilbert transform).
+Users can implement a one `Lorentz`, or two `Gaussian` oscillator model for their
+material by::
+
+    my_lorentz_material = Lorentz([Am], [Br], [En], Einf)
+    my_gaussian_material = Gauss([Am_1, Am_2], [Br_1, Br_2], [En_1, En_2], Einf)
+
+A demonstration on how to implement a user defined oscillator/dispersion curve is
+presented in the `User defined oscillator`_ notebook.
+Parameter values for `Cauchy, Sellmeier`_ and `Lorentz`_ are provided by Horiba.
+Cauchy parameters can also be found on `refractiveindex.info`_.
+
+Alternatively, users can simply supply a refractive index (n) and extinction coefficient
+(k) for a single wavelength measurement::
 
     my_material = RI([n, k])
 
+How do I make my own dielectric function/dispersion curve?
+----------------------------------------------------------
+
+A demonstration on how to implement a user defined oscillator/dispersion curve is
+presented in the `User defined oscillator`_ notebook.
 
 What EMA methods does *refellips* provide?
 ------------------------------------------
@@ -140,8 +175,8 @@ both `Markel`_ and `Humlicek`_.
 
 Can I save models/objectives to a file?
 ---------------------------------------
-Assuming that you have a :class:`refellips.ReflectModelSE` or
-:class:`refellips.ObjectiveSE` that you'd like to save to file,
+Assuming that you have a :class:`~refellips.reflect_modelSE.ReflectModelSE` or
+:class:`~refellips.objectiveSE.ObjectiveSE` that you'd like to save to file,
 the easiest way to do this is via serialisation to a Python pickle::
 
     import pickle

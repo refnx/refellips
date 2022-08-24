@@ -260,7 +260,7 @@ def open_EP4file(fname, reflect_delta=False):
     Typically a .dat file.
 
     Note: This file parser has been written for specific Accurion ellipsometers
-    EP3 and EP4. No work has been done to ensure it is compatable with all
+    EP3 and EP4. No work has been done to ensure it is compatible with all
     Accurion ellipsometers. If you have trouble with this parser contact the
     maintainers through github.
 
