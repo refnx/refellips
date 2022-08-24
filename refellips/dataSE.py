@@ -44,18 +44,8 @@ class DataSE(object):
 
     Attributes
     ----------
-    data : tuple of np.ndarray
-        The data, (wavelength, AOI, psi, delta)
-    finite_data : tuple of np.ndarray
-        Data points that are finite
-    wavelength : np.ndarray
-        wavelength (nm)
     AOI : np.ndarray
         angle of incidence (degree)
-    psi : np.ndarray
-        psi
-    delta : np.ndarray
-        delta
     mask : np.ndarray
         mask
     filename : str or None
@@ -64,7 +54,6 @@ class DataSE(object):
         Whether the y data has uncertainties
     metadata : dict
         Information that should be retained with the dataset.
-
     """
 
     def __init__(
@@ -151,7 +140,8 @@ class DataSE(object):
 
     @property
     def wavelength(self):
-        """Wavelength."""
+        """wavelength(nm)"""
+
         if self._wavelength.size > 0:
             return self._wavelength[self.mask]
         else:
@@ -183,7 +173,7 @@ class DataSE(object):
 
     @property
     def data(self):
-        """4-tuple containing the (lambda, AOI, psi, delta) data."""
+        """4-tuple containing the (wavelength), AOI, psi, delta) data."""
         return self.wavelength, self.aoi, self.psi, self.delta
 
     @data.setter
