@@ -9,6 +9,9 @@ Frequently Asked Questions
 .. _Markel: https://doi.org/10.1364/JOSAA.33.001244
 .. _Humlicek: https://doi.org/10.1007/978-3-642-33956-1_3
 .. _getting started: getting_started.ipynb#Saving-the-objective
+.. _Gaussian oscillator: https://nbviewer.org/github/refnx/refellips/blob/master/demos/refellipsDemo_GaussianOscillator.ipynb
+.. _Cauchy, Sellmeier: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Cauchy_and_related_empirical_dispersion_Formulae_for_Transparent_Materials.pdf
+.. _Lorentz: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Lorentz_Dispersion_Model.pdf
 
 A list of common questions.
 
@@ -69,13 +72,37 @@ If three columns are provided, the third is loaded as the extinction coefficient
 The *refellips* maintainers are happy to include additional dispersion curves
 with the package; please ask if you'd like this to happen.
 
-Alternatively, users have the option to specify Cauchy parameters (a,b,c) for their
-material::
+Alternatively, users have the option to choose from any of the in-built oscillator
+functions to model the optical properties of their material: `Cauchy`, `Sellmeier`,
+`Lorentz` and `Gauss`. Both the `Cauchy` and `Sellmeier` oscillators monotonically
+decrease in refractive index with increasing wavelength and are therefore not
+Kramers-Kronig consistent. These optical models are frequently used to model the
+optical properties of transparent materials, however, the Sellmeier is more accurate
+at higher wavelengths, i.e., the infra-red region. Users can specify `Cauchy` and
+`Sellmeier` parameters for their material::
 
-    my_material = Cauchy(A=a, B=b, C=c)
+    my_cauchy_material = Cauchy(A=a, B=b, C=c)
+    my_sellmeier_material = Sellmeier(Am, En, P, Einf)
 
-or simply a refractive index (n) and extinction coefficent (k) for a single
-wavelength measurement::
+
+Both the `Lorentz` and `Gaussian` functions are Kramers-Kronig consistent, and allow
+users to implement multiple oscillators. `Lorentz` oscillators are typically employed
+when working with materials above the fundamental band gap, describing well the optical
+properties of transparent and weakly absorbing materials. `Gaussian` oscillators are
+typically used for absorbing materials, where the complex component models the Gaussian
+absorption and the real component is its Kramers-Kronig relation (a Hilbert transform).
+Users can implement a one `Lorentz`, or two `Gaussian` oscillator model for their
+material by::
+
+    my_lorentz_material = Lorentz([Am], [Br], [En], Einf)
+    my_gaussian_material = Gauss([Am_1, Am_2], [Br_1, Br_2], [En_1, En_2], Einf)
+
+An example of the Gaussian oscillator is provided in the `Gaussian oscillator`_ notebook.
+Parameter values for `Cauchy, Sellmeier`_ and `Lorentz`_ are provided by Horiba.
+Cauchy parameters can also be found on `refractiveindex.info`_.
+
+Alternatively, users can simply supply a refractive index (n) and extinction coefficient
+(k) for a single wavelength measurement::
 
     my_material = RI([n, k])
 
