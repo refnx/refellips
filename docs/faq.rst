@@ -43,23 +43,24 @@ What formats/types of ellipsometry data does *refellips* handle?
 ----------------------------------------------------------------
 
 *refellips* has the capability of loading data directly from both Accurion EP3
-and EP4 ellipsometers, as well Horiba ellipsometers using the `open_EP4file`
-and `open_HORIBAfile` functions, respectively.
+and EP4 ellipsometers, as well Horiba ellipsometers using the
+:func:`~refellips.dataSE.open_EP4file` and
+:func:`~refellips.dataSE.open_HORIBAfile` functions, respectively.
 
 Alternatively, users also have the option to load-in other datasets using
-`DataSE`. Files loaded using `DataSE` must contain four columns (with header):
-wavelength, angle of incidence, psi and delta.
+:class:`~refellips.dataSE.DataSE`. Files loaded using `DataSE` must contain
+four columns (with header): wavelength, angle of incidence, psi and delta.
 
 
 Where do I find dispersion curves for a material?
 -------------------------------------------------
 
 *refellips* contains preloaded dispersion curves for select materials, which
-are accessible by the `load_material` function. These materials are sourced
-from `refractiveindex.info`_, and include air, a void, water,
-dimethyl sulfoxide, silicon, silica, gold, aluminium oxide, polystyrene,
-poly(N-isopropylacrylamide) (PNIPAM) and a material that represents a diffuse
-polymer.
+are accessible by the :func:`~refellips.structureSE.load_material` function.
+These materials are sourced from `refractiveindex.info`_, and include air,
+a void, water, dimethyl sulfoxide, silicon, silica, gold, aluminium oxide,
+polystyrene, poly(N-isopropylacrylamide) (PNIPAM) and a material that
+represents a diffuse polymer.
 
 If required, users can download their own dispersion curves from
 `refractiveindex.info`_ and load them into *refellips* using::
@@ -73,17 +74,18 @@ The *refellips* maintainers are happy to include additional dispersion curves
 with the package; please ask if you'd like this to happen.
 
 Alternatively, users have the option to choose from any of the in-built oscillator
-functions to model the optical properties of their material: `Cauchy`, `Sellmeier`,
-`Lorentz` and `Gauss`. Both the `Cauchy` and `Sellmeier` oscillators monotonically
-decrease in refractive index with increasing wavelength and are therefore not
-Kramers-Kronig consistent. These optical models are frequently used to model the
-optical properties of transparent materials, however, the Sellmeier is more accurate
-at higher wavelengths, i.e., the infra-red region. Users can specify `Cauchy` and
-`Sellmeier` parameters for their material::
+functions to model the optical properties of their material:
+:class:`~refellips.structureSE.Cauchy`, :class:`~refellips.structureSE.Sellmeier`,
+:class:`~refellips.structureSE.Lorentz` and :class:`~refellips.structureSE.Gauss`.
+Both the `Cauchy` and `Sellmeier` oscillators monotonically decrease in refractive
+index with increasing wavelength and are therefore not Kramers-Kronig consistent.
+These optical models are frequently used to model the optical properties of
+transparent materials, however, the Sellmeier is more accurate at higher
+wavelengths, i.e., the infra-red region. Users can specify `Cauchy` and `Sellmeier`
+parameters for their material::
 
     my_cauchy_material = Cauchy(A=a, B=b, C=c)
     my_sellmeier_material = Sellmeier(Am, En, P, Einf)
-
 
 Both the `Lorentz` and `Gaussian` functions are Kramers-Kronig consistent, and allow
 users to implement multiple oscillators. `Lorentz` oscillators are typically employed
@@ -107,6 +109,11 @@ Alternatively, users can simply supply a refractive index (n) and extinction coe
 
     my_material = RI([n, k])
 
+How do I make my own dielectric function/dispersion curve?
+----------------------------------------------------------
+
+A demonstration on how to implement a user defined oscillator/dispersion curve is
+presented in the `User defined oscillator`_ notebook.
 
 What EMA methods does *refellips* provide?
 ------------------------------------------
@@ -168,8 +175,8 @@ both `Markel`_ and `Humlicek`_.
 
 Can I save models/objectives to a file?
 ---------------------------------------
-Assuming that you have a :class:`refellips.ReflectModelSE` or
-:class:`refellips.ObjectiveSE` that you'd like to save to file,
+Assuming that you have a :class:`~refellips.reflect_modelSE.ReflectModelSE` or
+:class:`~refellips.objectiveSE.ObjectiveSE` that you'd like to save to file,
 the easiest way to do this is via serialisation to a Python pickle::
 
     import pickle
