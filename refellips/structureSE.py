@@ -469,7 +469,7 @@ class Lorentz(ScattererSE):
     -----
     Calculates dispersion curves for *k* oscillators, as implemented in WVASE.
     The model is Kramers-Kronig consistent.
-    The paramers for constructing this object should have
+    The parameters for constructing this object should have
     `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
 
     ..math::
@@ -532,6 +532,8 @@ class Gauss(ScattererSE):
         Broadening of oscillator
     En: {float, Parameter, sequence}
         Centre energy of oscillator (eV)
+    Einf: {float, Parameter}
+        Offset term
     wavelength : float
         default wavelength for calculation (nm)
     name : str, optional
@@ -541,7 +543,7 @@ class Gauss(ScattererSE):
     -----
     Calculates dispersion curves for *k* Gaussian oscillators.
     The model is Kramers-Kronig consistent.
-    The paramers for constructing this object should have
+    The parameters for constructing this object should have
     `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
 
     ..math::

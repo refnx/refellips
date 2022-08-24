@@ -9,7 +9,7 @@ Frequently Asked Questions
 .. _Markel: https://doi.org/10.1364/JOSAA.33.001244
 .. _Humlicek: https://doi.org/10.1007/978-3-642-33956-1_3
 .. _getting started: getting_started.ipynb#Saving-the-objective
-.. _Gaussian oscillator: https://nbviewer.org/github/refnx/refellips/blob/master/demos/refellipsDemo_GaussianOscillator.ipynb
+.. _User defined oscillator: https://nbviewer.org/github/refnx/refellips/blob/master/demos/refellipsDemo_UserDefinedOscillator.ipynb
 .. _Cauchy, Sellmeier: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Cauchy_and_related_empirical_dispersion_Formulae_for_Transparent_Materials.pdf
 .. _Lorentz: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Lorentz_Dispersion_Model.pdf
 
@@ -97,7 +97,8 @@ material by::
     my_lorentz_material = Lorentz([Am], [Br], [En], Einf)
     my_gaussian_material = Gauss([Am_1, Am_2], [Br_1, Br_2], [En_1, En_2], Einf)
 
-An example of the Gaussian oscillator is provided in the `Gaussian oscillator`_ notebook.
+A demonstration on how to implement a user defined oscillator/dispersion curve is
+presented in the `User defined oscillator`_ notebook.
 Parameter values for `Cauchy, Sellmeier`_ and `Lorentz`_ are provided by Horiba.
 Cauchy parameters can also be found on `refractiveindex.info`_.
 
