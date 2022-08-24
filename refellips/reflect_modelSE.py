@@ -356,8 +356,8 @@ class ReflectModelSE:
 
         Returns
         -------
-        reflectivity : np.ndarray
-            Calculated reflectivity
+        psi, delta : np.ndarray
+            Calculated ellipsometric parameters
 
         """
         if p is not None:
