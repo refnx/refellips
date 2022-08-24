@@ -33,6 +33,8 @@ extensions = [
     "jupyter_sphinx",
     "nbsphinx",
     "myst_parser",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx.ext.mathjax",
 ]

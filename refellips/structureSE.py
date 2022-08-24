@@ -370,7 +370,7 @@ class Sellmeier(ScattererSE):
     Calculates dispersion curves of a Sellmeier oscillator as implemented in CompleteEase.
     CompleteEase Manual, Chapter 9, pg 9-306, J.A. Woollam Co., 2014.
 
-    ..math::
+    .. math::
 
     n = \sqrt{ \varepsilon (\infty) + \frac{Am \lambda^2}{\lambda^2 - En^2} - P\lambda^2}
 
@@ -541,11 +541,8 @@ class Gauss(ScattererSE):
     -----
     Calculates dispersion curves for *k* Gaussian oscillators.
     The model is Kramers-Kronig consistent.
-    The paramers for constructing this object should have
+    The parameters for constructing this object should have
     `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
-
-    ..math::
-
     """
 
     def __init__(self, Am, Br, En, Einf=1, wavelength=658, name=""):
@@ -662,8 +659,8 @@ class ComponentSE(Component):
 
 class SlabSE(ComponentSE):
     """
-    A slab component has uniform SLD over its thickness
-    from refnx.reflect.structure.Slab
+    A slab component has uniform refractive index over its thickness
+
     Parameters
     ----------
     thick : refnx.analysis.Parameter or float
