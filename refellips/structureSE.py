@@ -36,10 +36,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # -*- coding: utf-8 -*-
 import numpy as np
+import scipy.fftpack as ft
 import os
 import os.path
 import warnings
 import glob
+from pathlib import PurePath
 
 from refnx.reflect.structure import (
     Scatterer,
@@ -48,7 +50,12 @@ from refnx.reflect.structure import (
     Component,
     sld_profile,
 )
-from refnx.analysis import Parameters, Parameter, possibly_create_parameter
+from refnx.analysis import (
+    Parameters,
+    Parameter,
+    possibly_create_parameter,
+    sequence_to_parameters,
+)
 from refnx._lib import flatten
 from refnx.reflect import _reflect as refcalc
 
@@ -86,9 +93,32 @@ class ScattererSE(Scatterer):
         return self.complex(None)
 
     def complex(self, wavelength):
-        raise NotImplementedError(
-            "The complex method is not implemented for this subclass"
-        )
+        """
+        Calculate a complex RI
+
+        Parameters
+        ----------
+        wavelength : float
+            wavelength of light in nm
+
+        Returns
+        -------
+        RI : complex
+            refractive index and extinction coefficient
+        """
+        if hasattr(self, "epsilon"):
+            wav = self.wavelength
+            if np.any(wavelength):
+                wav = wavelength
+
+            # convert wavelengths to eV
+            energies = nm_to_eV(wav)
+            dispersion = self.epsilon(energies)
+            return np.sqrt(dispersion)
+        else:
+            raise NotImplementedError(
+                "epsilon or complex not defined for this object"
+            )
 
     def __call__(self, thick=0, rough=0, vfsolv=0):
         """
@@ -128,7 +158,7 @@ class RI(ScattererSE):
 
     Parameters
     ----------
-    dispersion : {str, tuple, np.ndarray)
+    dispersion : {str, Path, tuple, np.ndarray)
         If a string then a dispersion curve will be loaded from a file that
         the string points to. The file is assumed to be of CSV format, with the
         first column holding the wavelength (in *microns*), with the second
@@ -166,7 +196,7 @@ class RI(ScattererSE):
             raise RuntimeError("dispersion must be specified")
 
         if dispersion is not None:
-            if type(dispersion) is str:
+            if type(dispersion) is str or isinstance(dispersion, PurePath):
                 if not len(name):
                     # if there is no name get it from the path
                     name = os.path.basename(dispersion).split(".")[0]
@@ -316,6 +346,257 @@ class Cauchy(ScattererSE):
         return real + 1j * 0.0
 
 
+class Sellmeier(ScattererSE):
+    r"""
+    Dispersion curves for Sellmeier oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter}
+        Amplitude of Sellmeier in μm.
+    En: {float, Parameter}
+        Center energy of oscillator in μm.
+    P: {float, Parameter}
+        Position of a pole in μm.
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves of a Sellmeier oscillator as implemented in CompleteEase.
+    CompleteEase Manual, Chapter 9, pg 9-306, J.A. Woollam Co., 2014.
+
+    ..math::
+
+    n = \sqrt{ \varepsilon (\infty) + \frac{Am \lambda^2}{\lambda^2 - En^2} - P\lambda^2}
+
+    Examples
+    --------
+    >>> # Create a Sellmeier oscillator
+    >>> sell = Sellmeier(2, 0.1, 0.11, Einf=1)
+    >>> sell.complex(658)  # calculates the refractive index at 658 nm.
+    """
+
+    def __init__(self, Am, En, P, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self.Am = possibly_create_parameter(Am, name=f"{name} - sellmeier Am")
+        self.En = possibly_create_parameter(En, name=f"{name} - sellmeier En")
+        self.P = possibly_create_parameter(P, name=f"{name} - sellmeier P")
+        self.Einf = possibly_create_parameter(
+            Einf, name=f"{name} - sellmeier Einf"
+        )
+
+        self._parameters = Parameters(name=name)
+        self._parameters.extend([self.Am, self.En, self.P, self.Einf])
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def complex(self, wavelength):
+        """
+        Calculate a complex RI for the given Sellmeier oscillator
+
+        Parameters
+        ----------
+        wavelength : float
+            wavelength of light in nm
+
+        Returns
+        -------
+        RI : complex
+            refractive index and extinction coefficient
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = np.sqrt(
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+        return real + 1j * 0.0
+
+    def epsilon(self, wavelength):
+        """
+        The complex dielectric function for the oscillator
+        """
+        wav = self.wavelength
+        if np.any(wavelength):
+            wav = wavelength
+
+        # Convert between μm & nm (constants are typically given in μm)
+        wav *= 1e-3
+
+        real = (
+            self.Einf.value
+            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
+            - (self.P.value * wav**2)
+        )
+
+        return real + 1j * 0
+
+
+class Lorentz(ScattererSE):
+    r"""
+    Dispersion curves for Lorentz oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter, sequence}
+        Amplitude of Lorentzian
+    Br: {float, Parameter, sequence}
+        Broadening of oscillator
+    En: {float, Parameter, sequence}
+        Centre energy of oscillator (eV)
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves for *k* oscillators, as implemented in WVASE.
+    The model is Kramers-Kronig consistent.
+    The paramers for constructing this object should have
+    `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
+
+    ..math::
+
+    \tilde{\varepsilon}(h\nu)=\varepsilon_{1\infty }+\sum_{k}\frac{A_{k}}{E_{k}^2 - (h\nu)^2-iB_kh\nu}
+
+    Examples
+    --------
+    >>> # Create a single Lorentz oscillator
+    >>> Lorentz(5, 0.25, 2, Einf=1)
+    >>> # Create a 2 oscillator dispersion curve
+    >>> lo = Lorentz([5, 10], [0.25, 0.5], [2, 4], Einf=2)
+    >>> lo.complex(658)  # calculates the refractive index at 658 nm.
+    """
+
+    def __init__(self, Am, Br, En, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self._parameters = Parameters(name=name)
+        self.Am = sequence_to_parameters([Am])
+        self.Br = sequence_to_parameters([Br])
+        self.En = sequence_to_parameters([En])
+        if not (len(self.Am) == len(self.Br) == len(self.En)):
+            raise ValueError("A, B, E all have to be the same length")
+
+        self._parameters.extend([self.Am, self.Br, self.En])
+        self.Einf = possibly_create_parameter(Einf)
+        self._parameters.append(self.Einf)
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def epsilon(self, energy):
+        """
+        The complex dielectric function for the oscillator
+        """
+        A = np.array(self.Am)
+        B = np.array(self.Br)
+        E = np.array(self.En)
+        _e = np.asfarray(energy)
+        v = A[:, None] / (E[:, None] ** 2 - _e**2 - 1j * B[:, None] * _e)
+        r = np.atleast_1d(np.sum(v, axis=0) + self.Einf.value)
+
+        if np.isscalar(energy) and len(r) == 1:
+            return r[0]
+
+        return r
+
+
+class Gauss(ScattererSE):
+    """
+    Dispersion curves for Gaussian oscillators.
+
+    Parameters
+    ----------
+    Am: {float, Parameter, sequence}
+        Amplitude of Gaussian
+    Br: {float, Parameter, sequence}
+        Broadening of oscillator
+    En: {float, Parameter, sequence}
+        Centre energy of oscillator (eV)
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material.
+
+    Notes
+    -----
+    Calculates dispersion curves for *k* Gaussian oscillators.
+    The model is Kramers-Kronig consistent.
+    The paramers for constructing this object should have
+    `len(Am) == len(Br) == len(En) == k`, or be single float/Parameter.
+
+    ..math::
+
+    """
+
+    def __init__(self, Am, Br, En, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self._parameters = Parameters(name=name)
+        self.Am = sequence_to_parameters([Am])
+        self.Br = sequence_to_parameters([Br])
+        self.En = sequence_to_parameters([En])
+        if not (len(self.Am) == len(self.Br) == len(self.En)):
+            raise ValueError("A, B, E all have to be the same length")
+
+        self.Einf = possibly_create_parameter(Einf)
+        self._parameters.extend([self.Am, self.Br, self.En])
+        self._parameters.append(self.Einf)
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def epsilon(self, energy):
+        """
+        The complex dielectric function for the oscillator
+        """
+        A = np.array(self.Am)
+        B = np.array(self.Br)
+        E = np.array(self.En)
+        energies = np.asfarray(energy)
+
+        # TODO cache if params don't change
+        _e_pad = np.linspace(-20, 20, 2048)
+        sigma = B / 2 / np.sqrt(np.log(2))
+        e2 = A[:, None] * np.exp(
+            -(((_e_pad - E[:, None]) / sigma[:, None]) ** 2)
+        )
+        e2 -= A[:, None] * np.exp(
+            -(((_e_pad + E[:, None]) / sigma[:, None]) ** 2)
+        )
+        e2 = np.sum(e2, axis=0)
+        # e1 is Kramers-Kronig consistent via Hilbert transform
+        e1 = ft.hilbert(e2) + self.Einf.value
+
+        # (linearly) interpolate to find epsilon at given energy
+        _e1 = np.interp(energies, _e_pad, e1)
+        _e2 = np.interp(energies, _e_pad, e2)
+        r = np.atleast_1d(_e1 + 1j * _e2)
+        if np.isscalar(energy) and len(r) == 1:
+            return r[0]
+        return r
+
+
 class ComponentSE(Component):
     """
     A base class for describing the structure of a subset of an interface.
@@ -449,7 +730,9 @@ class SlabSE(ComponentSE):
         if self.ri.dispersive:
             ric = self.ri.complex(getattr(structure, "wavelength", None))
         else:
-            ric = complex(self.ri)
+            ric = self.ri
+
+        ric = complex(ric)
 
         return np.array(
             [
@@ -703,6 +986,12 @@ class StructureSE(Structure):
                 "You can only add ComponentSE objects to a structure"
             )
         super().append(item)
+
+    def reflectivity(self):
+        raise NotImplementedError(
+            "Use refellips.ReflectModelSE to calculate ellipsometric"
+            " parameters"
+        )
 
     def slabs(self, **kwds):
         r"""
@@ -1090,3 +1379,18 @@ def overall_ri(ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3):
 
     ri_avg = np.sqrt(E_avg)
     return ri_avg
+
+
+def nm_to_eV(nm):
+    """
+    Convert wavelength from nm to eV
+    Visible light has a range of energies from 1.77 (red) to 3.26 (blue) eV
+    """
+    return 1239.841984055 / nm
+
+
+def eV_to_nm(eV):
+    """
+    Convert wavelength from eV to nm
+    """
+    return 1239.841984055 / eV
