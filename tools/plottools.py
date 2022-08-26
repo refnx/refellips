@@ -166,6 +166,7 @@ def plot_structure(
     structure.reverse_structure = reverse_structure
 
     for wav, col in zip(wavelengths, colors):
+        structure.wavelength = wav
         ax.plot(
             *structure.ri_profile(), color=col, alpha=alpha, label=f"{wav} nm"
         )
