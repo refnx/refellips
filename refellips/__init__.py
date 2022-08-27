@@ -9,7 +9,7 @@ from .structureSE import (
     ComponentSE,
     MixedSlabSE,
 )
-from ._dispersion import (
+from .dispersion import (
     RI,
     Cauchy,
     Sellmeier,
@@ -17,6 +17,8 @@ from ._dispersion import (
     Gauss,
     load_material,
     materials,
+    nm_to_eV,
+    eV_to_nm,
 )
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE
