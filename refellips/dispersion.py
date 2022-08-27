@@ -1,23 +1,16 @@
 import numpy as np
 import os
 import os.path
-import warnings
 import glob
 from pathlib import PurePath
 import scipy.fftpack as ft
 
 
-from refnx.reflect.structure import Scatterer
-
 from refnx.analysis import (
     Parameters,
-    Parameter,
     possibly_create_parameter,
     sequence_to_parameters,
 )
-
-from refnx._lib import flatten
-from refnx.reflect import _reflect as refcalc
 
 from .structureSE import ScattererSE, nm_to_eV, eV_to_nm
 
@@ -249,7 +242,8 @@ class Sellmeier(ScattererSE):
 
     Notes
     -----
-    Calculates dispersion curves of a Sellmeier oscillator as implemented in CompleteEase.
+    Calculates dispersion curves of a Sellmeier oscillator as implemented in
+    CompleteEase.
     CompleteEase Manual, Chapter 9, pg 9-306, J.A. Woollam Co., 2014.
 
     .. math::

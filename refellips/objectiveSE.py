@@ -11,15 +11,11 @@ from .dataSE import DataSE
 
 from refnx.analysis import (
     is_parameter,
-    Parameter,
     possibly_create_parameter,
-    is_parameters,
     Parameters,
-    Interval,
-    PDF,
 )
 from refnx._lib import unique as f_unique
-from refnx._lib import flatten, approx_hess2
+from refnx._lib import flatten
 
 
 class ObjectiveSE(BaseObjective):

@@ -33,13 +33,13 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
 import os.path
 import warnings
 import glob
+import operator
 from pathlib import PurePath
 
 
@@ -211,7 +211,7 @@ class SlabSE(ComponentSE):
     ----------
     thick : refnx.analysis.Parameter or float
         thickness of slab (Angstrom)
-    ri : :class:`refellips.ScattererSE`, complex, or float
+    ri : :class:`refellips.ScattererSE`
         (complex) RI of film
     rough : refnx.analysis.Parameter or float
         roughness on top of this slab (Angstrom)
@@ -231,10 +231,10 @@ class SlabSE(ComponentSE):
         self.thick = possibly_create_parameter(
             thick, name=f"{name} - thick", units="Å"
         )
-        if isinstance(ri, ScattererSE):
-            self.ri = ri
-        else:
-            self.ri = RI(ri)
+        if not isinstance(ri, ScattererSE):
+            raise ValueError("ri should be a ScattererSE object")
+        self.ri = ri
+
         self.rough = possibly_create_parameter(
             rough, name=f"{name} - rough", units="Å"
         )
@@ -477,14 +477,7 @@ class StructureSE(Structure):
 
     @property
     def solvent(self):
-        if self._solvent is None:
-            if not self.reverse_structure:
-                solv_slab = self[-1].slabs(self)
-            else:
-                solv_slab = self[0].slabs(self)
-            return RI(complex(solv_slab[-1, 1], solv_slab[-1, 2]))
-        else:
-            return self._solvent
+        return self._solvent
 
     @solvent.setter
     def solvent(self, ri):
@@ -494,8 +487,7 @@ class StructureSE(Structure):
             # don't make a new SLD object, use its reference
             self._solvent = ri
         else:
-            solv = RI(ri)
-            self._solvent = solv
+            raise ValueError("ri must be a ScattererSE object or None")
 
     @property
     def depolarisation_factor(self):

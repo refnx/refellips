@@ -481,16 +481,16 @@ def open_HORIBAfile(
         lines = f.readlines()
 
         for i, line in enumerate(lines):
-            l = line[:-1]  # Drop newline character
+            line = line.strip()  # Drop newline character
             if not MDingest:
-                if len(l) and l[0] == "#":
-                    MDlabel = " ".join(l.split(" ")[1:])[:-1]
+                if len(line) and line[0] == "#":
+                    MDlabel = " ".join(line.split(" ")[1:])[:-1]
                     metadata[MDlabel] = []
                     linenodict[MDlabel] = i
                     MDingest = True
 
             else:
-                if not len(l):
+                if not len(line):
                     MDingest = False
                     if not len(
                         metadata[MDlabel]
@@ -502,7 +502,7 @@ def open_HORIBAfile(
                         ]  # remove data from list
 
                 else:  # there is metadata in the line
-                    metadata[MDlabel].append(l)  # append line to metadata entry
+                    metadata[MDlabel].append(line)  # append line to metadata entry
 
     data_df = pd.read_csv(
         fname,
