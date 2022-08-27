@@ -502,7 +502,9 @@ def open_HORIBAfile(
                         ]  # remove data from list
 
                 else:  # there is metadata in the line
-                    metadata[MDlabel].append(line)  # append line to metadata entry
+                    metadata[MDlabel].append(
+                        line
+                    )  # append line to metadata entry
 
     data_df = pd.read_csv(
         fname,
