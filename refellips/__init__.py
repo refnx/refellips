@@ -17,7 +17,7 @@ from .dispersion import (
     TaucLorentz,
     load_material,
     materials,
-    nm_eV_conversion
+    nm_eV_conversion,
 )
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE
