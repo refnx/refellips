@@ -12,7 +12,7 @@ from refnx.analysis import (
     sequence_to_parameters,
 )
 
-from .structureSE import ScattererSE, nm_to_eV, eV_to_nm
+from .structureSE import ScattererSE, nm_eV_conversion
 
 
 # list of material dispersion curves distributed with refellips

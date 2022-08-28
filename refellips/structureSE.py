@@ -106,7 +106,7 @@ class ScattererSE(Scatterer):
                 wav = wavelength
 
             # convert wavelengths to eV
-            energies = nm_to_eV(wav)
+            energies = nm_eV_conversion(wav)
             dispersion = self.epsilon(energies)
             return np.sqrt(dispersion)
         else:
@@ -916,16 +916,13 @@ def overall_ri(ri_A, ri_B, vf_B=0.0, ema="linear", depolarisation_factor=1 / 3):
     return ri_avg
 
 
-def nm_to_eV(nm):
+def nm_eV_conversion(val):
     """
     Convert wavelength from nm to eV
+    -or-
+    Convert wavelength from nm to eV
+
+    It does both.
     Visible light has a range of energies from 1.77 (red) to 3.26 (blue) eV
     """
-    return 1239.841984055 / nm
-
-
-def eV_to_nm(eV):
-    """
-    Convert wavelength from eV to nm
-    """
-    return 1239.841984055 / eV
+    return 1239.841984055 / val
