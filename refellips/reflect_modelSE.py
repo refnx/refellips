@@ -123,7 +123,7 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     num_layers = n_list.size
 
     th_0, lam_vac = [np.array(a) for a in np.broadcast_arrays(th_0, lam_vac)]
-    orig_shp = th_0.shape
+    # orig_shp = th_0.shape
     th_0 = np.ravel(th_0)
     lam_vac = np.ravel(lam_vac)
 

@@ -5,7 +5,6 @@ from pathlib import Path
 from refnx.analysis import CurveFitter
 from refellips import (
     RI,
-    Cauchy,
     DataSE,
     Cauchy,
     Sellmeier,
@@ -378,7 +377,7 @@ def test_lorentz():
     lo = Lorentz(A, B, E, Einf)
     assert len(lo.Am) == 2
 
-    h = lo.complex(500)
+    lo.complex(500)
     lo.complex(None)
     lo.complex(np.linspace(350, 850, 100))
     lo.epsilon(np.linspace(1, 5))

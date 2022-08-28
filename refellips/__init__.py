@@ -1,19 +1,23 @@
 import os
-import re
 import sys
 
 from .structureSE import (
-    RI,
+    ScattererSE,
     StructureSE,
     SlabSE,
+    ComponentSE,
+    MixedSlabSE,
+)
+from .dispersion import (
+    RI,
     Cauchy,
     Sellmeier,
     Lorentz,
     Gauss,
-    ComponentSE,
-    materials,
     load_material,
-    MixedSlabSE,
+    materials,
+    nm_to_eV,
+    eV_to_nm,
 )
 from .dataSE import DataSE
 from .reflect_modelSE import ReflectModelSE

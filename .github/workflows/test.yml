@@ -54,10 +54,11 @@ jobs:
 
     - name: Lint with black
       run: |
-        python -m pip install black[jupyter]
+        python -m pip install black[jupyter] flake8
         black --check -l80 refellips
         black --check -l80 demos
         black --check -l80 docs
+        flake8 --ignore=F401,E501,W504,W503,E203,E231,E402 --count  --statistics refellips
 
 
   build_doc:
