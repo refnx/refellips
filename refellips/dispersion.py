@@ -12,7 +12,7 @@ from refnx.analysis import (
     sequence_to_parameters,
 )
 
-from .structureSE import ScattererSE, nm_to_eV, eV_to_nm
+from .structureSE import ScattererSE, nm_eV_conversion
 
 
 # list of material dispersion curves distributed with refellips
@@ -383,11 +383,11 @@ class Lorentz(ScattererSE):
         """
         The complex dielectric function for the oscillator
         """
-        A = np.array(self.Am)
-        B = np.array(self.Br)
-        E = np.array(self.En)
+        A = np.array(self.Am)[:, None]
+        B = np.array(self.Br)[:, None]
+        E = np.array(self.En)[:, None]
         _e = np.asfarray(energy)
-        v = A[:, None] / (E[:, None] ** 2 - _e**2 - 1j * B[:, None] * _e)
+        v = A / (E**2 - _e**2 - 1j * B * _e)
         r = np.atleast_1d(np.sum(v, axis=0) + self.Einf.value)
 
         if np.isscalar(energy) and len(r) == 1:
@@ -445,28 +445,185 @@ class Gauss(ScattererSE):
         """
         The complex dielectric function for the oscillator
         """
-        A = np.array(self.Am)
-        B = np.array(self.Br)
-        E = np.array(self.En)
+        A = np.array(self.Am)[:, None]
+        B = np.array(self.Br)[:, None]
+        E = np.array(self.En)[:, None]
         energies = np.asfarray(energy)
 
         # TODO cache if params don't change
         _e_pad = np.linspace(-20, 20, 2048)
         sigma = B / 2 / np.sqrt(np.log(2))
-        e2 = A[:, None] * np.exp(
-            -(((_e_pad - E[:, None]) / sigma[:, None]) ** 2)
-        )
-        e2 -= A[:, None] * np.exp(
-            -(((_e_pad + E[:, None]) / sigma[:, None]) ** 2)
-        )
-        e2 = np.sum(e2, axis=0)
+        e2 = A * np.exp(-(((_e_pad - E) / sigma) ** 2))
+        e2 -= A * np.exp(-(((_e_pad + E) / sigma) ** 2))
+
         # e1 is Kramers-Kronig consistent via Hilbert transform
-        e1 = ft.hilbert(e2) + self.Einf.value
+        # e1 = ft.hilbert(e2) + self.Einf.value
+        e1 = np.array([ft.hilbert(_e2) for _e2 in e2])
+
+        e1 = np.sum(e1, axis=0) + self.Einf.value
+        e2 = np.sum(e2, axis=0)
 
         # (linearly) interpolate to find epsilon at given energy
         _e1 = np.interp(energies, _e_pad, e1)
         _e2 = np.interp(energies, _e_pad, e2)
         r = np.atleast_1d(_e1 + 1j * _e2)
+        if np.isscalar(energy) and len(r) == 1:
+            return r[0]
+        return r
+
+
+class TaucLorentz(ScattererSE):
+    """
+    Dispersion curves for Tauc-Lorentz oscillators. The model works well for
+    amorphous materials in the visible range.
+
+    Parameters
+    ----------
+    Am: {float, Parameter, sequence}
+        Amplitude of absorption. Typically in [10, 200]
+    C: {float, Parameter, sequence}
+        Lorentz broadening of oscillator (eV). Typically in [0, 10].
+        ``C`` should be less than ``2 * En``
+    En: {float, Parameter, sequence}
+        Lorentz resonance energy (eV). ``En`` should be greater than ``Eg``.
+    Eg: {float, Parameter}
+        Common bandgap energy (eV) for all oscillators
+    Einf: {float, Parameter}
+        Offset term
+    wavelength : float
+        default wavelength for calculation (nm)
+    name : str, optional
+        Name of material
+
+    Notes
+    -----
+    Calculates dispersion curves for *k* Tauc-Lorentz oscillators.
+    The model is Kramers-Kronig consistent.
+    The parameters for constructing this object should have
+    `len(Am) == len(C) == len(En) == k`, or be single float/Parameter.
+
+    Implemented using the equations from
+    `Horiba technical note <https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Tauc-Lorentz_Dispersion_Formula.pdf>`_
+    and also the WVASE manual and https://en.wikipedia.org/wiki/Tauc%E2%80%93Lorentz_model.
+
+    The Horiba technical note gives parameters for many materials.
+
+    * G.E. Jellision and F.A. Modine, Appl. Phys. Lett. 69 (3), 371-374 (1996)
+    * Erratum, G.E. Jellison and F.A. Modine, Appl. Phys. Lett 69 (14), 2137 (1996)
+    * H. Chen, W.Z. Shen, Eur. Phys. J. B. 43, 503-507 (2005)
+    """
+
+    def __init__(self, Am, C, En, Eg, Einf=1, wavelength=658, name=""):
+        super().__init__(name=name, wavelength=wavelength)
+
+        self._parameters = Parameters(name=name)
+        self.Am = sequence_to_parameters([Am])
+        self.C = sequence_to_parameters([C])
+        self.En = sequence_to_parameters([En])
+        if not (len(self.Am) == len(self.C) == len(self.En)):
+            raise ValueError("A, B, E all have to be the same length")
+
+        self.Einf = possibly_create_parameter(Einf)
+        self.Eg = possibly_create_parameter(Eg)
+        self._parameters.extend([self.Am, self.C, self.En, self.Einf, self.Eg])
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    def epsilon(self, energy):
+        """
+        The complex dielectric function for the oscillator
+        """
+        A = np.array(self.Am)[:, None]
+        C = np.array(self.C)[:, None]
+        Ei = np.array(self.En)[:, None]
+        Eg = self.Eg.value
+        energies = np.asfarray(energy)
+
+        a_ln = (
+            (Eg**2 - Ei**2) * energies**2
+            + Eg**2 * C**2
+            - Ei**2 * (Ei**2 + 3 * Eg**2)
+        )
+        a_atan = (energies**2 - Ei**2) * (
+            Ei**2 + Eg**2
+        ) + Eg**2 * C**2
+        alpha = np.sqrt(4 * Ei**2 - C**2)
+        gamma = np.sqrt(Ei**2 - C**2 / 2)
+        zeta4 = (energies**2 - gamma**2) ** 2 + 0.25 * alpha**2 * C**2
+
+        e1 = (
+            A
+            * C
+            * a_ln
+            / 2
+            / np.pi
+            / zeta4
+            / alpha
+            / Ei
+            * np.log(
+                (Ei**2 + Eg**2 + alpha * Eg)
+                / (Ei**2 + Eg**2 - alpha * Eg)
+            )
+        )
+        e1 -= (
+            A
+            / np.pi
+            * a_atan
+            / zeta4
+            / Ei
+            * (
+                np.pi
+                - np.arctan((2 * Eg + alpha) / C)
+                + np.arctan((alpha - 2 * Eg) / C)
+            )
+        )
+        e1 += (
+            2
+            * A
+            * Ei
+            * Eg
+            * (energies**2 - gamma**2)
+            / np.pi
+            / zeta4
+            / alpha
+            * (np.pi + 2 * np.arctan(2 * (gamma**2 - Eg**2) / alpha / C))
+        )
+        e1 -= (
+            A
+            * Ei
+            * C
+            * (energies**2 + Eg**2)
+            / np.pi
+            / zeta4
+            / energies
+            * np.log(np.abs(energies - Eg) / (energies + Eg))
+        )
+        e1 += (
+            2
+            * A
+            * Ei
+            * Eg
+            * C
+            / np.pi
+            / zeta4
+            * np.log(
+                np.abs(energies - Eg)
+                * (energies + Eg)
+                / np.sqrt((Ei**2 - Eg**2) ** 2 + Eg**2 * C**2)
+            )
+        )
+        e1 = np.sum(e1, axis=0) + self.Einf.value
+
+        # I don't think the Hilbert Transform works all that well on this
+        # dielectric function because the tail drops off v slowly.
+        e2 = A * Ei * C * (energies - Eg) ** 2
+        e2 /= energies * ((energies**2 - Ei**2) ** 2 + (C * energies) ** 2)
+        e2 *= np.heaviside(energies - Eg, 0)
+        e2 = np.sum(e2, axis=0)
+
+        r = np.atleast_1d(e1 + 1j * e2)
         if np.isscalar(energy) and len(r) == 1:
             return r[0]
         return r
