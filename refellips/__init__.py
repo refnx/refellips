@@ -14,6 +14,7 @@ from .dispersion import (
     Sellmeier,
     Lorentz,
     Gauss,
+    TaucLorentz,
     load_material,
     materials,
     nm_to_eV,
