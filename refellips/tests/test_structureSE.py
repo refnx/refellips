@@ -15,6 +15,7 @@ from refellips import (
     Cauchy,
     Sellmeier,
     Lorentz,
+    TaucLorentz,
     Gauss,
     MixedSlabSE,
     load_material,
@@ -113,6 +114,47 @@ def test_gauss_against_CompleteEase():
 
     assert_allclose(refellips_RI_n, wvase_output[:, 1], rtol=0.0013)
     assert_allclose(refellips_RI_k, wvase_output[:, 2], rtol=0.0047)
+
+
+def test_Gaussian_multi_against_CompleteEase():
+    # Check the Gauss model with multiple oscillators behaves as expected
+    Am = [1.7, 0.5, 1.3]
+    Br = [0.4, 3, 0.22]
+    En = [0.12, 2.98, 1.6]
+    Einf = 1
+    g = Gauss(Am, Br, En, Einf)
+
+    _f = pth / "tests" / "GaussianMulti_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    energy = wvase_output[:, 0]
+
+    refellips_e = g.epsilon(energy)
+    refellips_e1 = np.real(refellips_e)
+    refellips_e2 = np.imag(refellips_e)
+
+    assert_allclose(refellips_e1, wvase_output[:, 1], rtol=0.0097)
+    assert_allclose(refellips_e2, wvase_output[:, 2], rtol=0.0067)
+
+
+def test_TaucLorentz_against_CompleteEase():
+    # Check the Gauss model behaves as expected
+    Am = [22, 154]
+    C = [0.9, 1.6]
+    En = [1.2, 3.4]
+    Eg = 1.1
+    Einf = 1
+    tl = TaucLorentz(Am, C, En, Eg, Einf)
+
+    _f = pth / "tests" / "TaucLorentz_fromCompleteEase.txt"
+    wvase_output = np.loadtxt(_f)
+    energy = wvase_output[:, 0]
+
+    refellips_e = tl.epsilon(energy)
+    refellips_e1 = np.real(refellips_e)
+    refellips_e2 = np.imag(refellips_e)
+
+    assert_allclose(refellips_e1, wvase_output[:, 1], rtol=6.5e-6)
+    assert_allclose(refellips_e2, wvase_output[:, 2], rtol=4.5e-6)
 
 
 def test_dispersions_are_loadable():

@@ -12,6 +12,7 @@ Frequently Asked Questions
 .. _User defined oscillator: https://nbviewer.org/github/refnx/refellips/blob/master/demos/refellipsDemo_UserDefinedOscillator.ipynb
 .. _Cauchy, Sellmeier: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Cauchy_and_related_empirical_dispersion_Formulae_for_Transparent_Materials.pdf
 .. _Lorentz: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Lorentz_Dispersion_Model.pdf
+.. _Tauc-Lorentz: https://www.horiba.com/fileadmin/uploads/Scientific/Downloads/OpticalSchool_CN/TN/ellipsometer/Tauc-Lorentz_Dispersion_Formula.pdf
 
 A list of common questions.
 
@@ -76,33 +77,35 @@ with the package; please ask if you'd like this to happen.
 Alternatively, users have the option to choose from any of the in-built oscillator
 functions to model the optical properties of their material:
 :class:`~refellips.structureSE.Cauchy`, :class:`~refellips.structureSE.Sellmeier`,
-:class:`~refellips.structureSE.Lorentz` and :class:`~refellips.structureSE.Gauss`.
-Both the `Cauchy` and `Sellmeier` oscillators monotonically decrease in refractive
-index with increasing wavelength and are therefore not Kramers-Kronig consistent.
-These optical models are frequently used to model the optical properties of
-transparent materials, however, the Sellmeier is more accurate at higher
-wavelengths, i.e., the infra-red region. Users can specify `Cauchy` and `Sellmeier`
-parameters for their material::
+:class:`~refellips.structureSE.Lorentz`, :class:`~refellips.structureSE.TaucLorentz`
+and :class:`~refellips.structureSE.Gauss`. Both the `Cauchy` and `Sellmeier`
+oscillators monotonically decrease in refractive index with increasing wavelength
+and are therefore not Kramers-Kronig consistent. These optical models are frequently
+used to model the optical properties of transparent materials, however, the
+Sellmeier is more accurate at higher wavelengths, i.e., the infra-red region.
+Users can specify `Cauchy` and `Sellmeier` parameters for their material::
 
     my_cauchy_material = Cauchy(A=a, B=b, C=c)
     my_sellmeier_material = Sellmeier(Am, En, P, Einf)
 
-Both the `Lorentz` and `Gaussian` functions are Kramers-Kronig consistent, and allow
-users to implement multiple oscillators. `Lorentz` oscillators are typically employed
-when working with materials above the fundamental band gap, describing well the optical
-properties of transparent and weakly absorbing materials. `Gaussian` oscillators are
+The `Lorentz` `Tauc-Lorentz` and `Gaussian` functions are Kramers-Kronig consistent,
+and allow users to implement multiple oscillators. `Lorentz` oscillators are typically
+employed when working with materials above the fundamental band gap, describing well
+the optical properties of transparent and weakly absorbing materials. `Tauc-Lorentz`
+are often normally used for amorphous materials. `Gaussian` oscillators are
 typically used for absorbing materials, where the complex component models the Gaussian
 absorption and the real component is its Kramers-Kronig relation (a Hilbert transform).
-Users can implement a one `Lorentz`, or two `Gaussian` oscillator model for their
-material by::
+Users can implement a one `Lorentz` or `Tauc-Lorentz`, or a two `Gaussian` oscillator
+model for their material by::
 
     my_lorentz_material = Lorentz([Am], [Br], [En], Einf)
+    my_TaucLorentz_material = TaucLorentz([Am], [C], [En], Eg, Einf)
     my_gaussian_material = Gauss([Am_1, Am_2], [Br_1, Br_2], [En_1, En_2], Einf)
 
 A demonstration on how to implement a user defined oscillator/dispersion curve is
 presented in the `User defined oscillator`_ notebook.
-Parameter values for `Cauchy, Sellmeier`_ and `Lorentz`_ are provided by Horiba.
-Cauchy parameters can also be found on `refractiveindex.info`_.
+Parameter values for `Cauchy, Sellmeier`_, `Lorentz`_ and `Tauc-Lorentz`_ are
+provided by Horiba. Cauchy parameters can also be found on `refractiveindex.info`_.
 
 Alternatively, users can simply supply a refractive index (n) and extinction coefficient
 (k) for a single wavelength measurement::

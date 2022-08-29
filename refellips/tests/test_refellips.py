@@ -9,6 +9,7 @@ from refellips import (
     Cauchy,
     Sellmeier,
     Lorentz,
+    TaucLorentz,
     Gauss,
     ReflectModelSE,
     ObjectiveSE,
@@ -426,3 +427,55 @@ def test_gaussian():
 
     assert_allclose(psi, data.psi, rtol=0.03)
     assert_allclose(delta, data.delta, rtol=0.007)
+
+
+def test_gaussian_multi():
+    Am = [11, 25, 6]
+    Br = [0.4, 0.7, 0.3]
+    En = [0.12, 1.56, 2.98]
+    Einf = 1
+
+    data = DataSE(pth / "WVASE_Gaussian_example_225nmFilm_Multi.txt")
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    silica = load_material("silica")
+    film = Gauss(Am, Br, En, Einf)
+    s = air | film(2250) | silica(20) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    assert_allclose(psi, data.psi, rtol=0.027)
+    assert_allclose(delta, data.delta, rtol=0.032)
+
+
+def test_TaucLorentz():
+    Am = [51, 124]
+    C = [0.1, 0.9]
+    En = [0.98, 2.2]
+    Eg = 1
+    Einf = 1
+
+    data = DataSE(
+        pth
+        / "WVASE_TaucLorentz_example_350nmFilm_MultiWavelength_MultiAngle.txt"
+    )
+
+    air = load_material("air")
+    silicon = load_material("silicon")
+    silica = load_material("silica")
+    film = TaucLorentz(Am, C, En, Eg, Einf)
+    s = air | film(3500) | silica(30) | silicon()
+    model = ReflectModelSE(s)
+
+    wavelength_aoi = np.c_[
+        data.wavelength, np.full_like(data.wavelength, data.aoi)
+    ]
+    psi, delta = model.model(wavelength_aoi)
+
+    assert_allclose(psi, data.psi, rtol=0.0176)
+    assert_allclose(delta, data.delta, rtol=0.0066)
