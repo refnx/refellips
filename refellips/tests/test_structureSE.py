@@ -5,6 +5,7 @@ import glob
 import numpy as np
 from numpy.testing import assert_allclose
 from refnx._lib import flatten
+from refnx.reflect import Linear
 
 import refellips
 from refellips import (
@@ -187,3 +188,13 @@ def test_mixedslab():
     overall = np.sqrt(0.75 * riac**2 + 0.25 * ribc**2)
     assert_allclose(slab.slabs()[0, 1], np.real(overall))
     assert_allclose(slab.slabs()[0, 2], np.imag(overall))
+
+
+def test_micro_slicing():
+    i = Linear()
+    air = load_material("air")
+    si = load_material("silicon")
+    sio2 = load_material("silica")
+    s = air | sio2(100, 10) | si(0, 3)
+    s[1].interfaces = i
+    assert len(s.slabs()) > 300

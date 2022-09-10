@@ -468,6 +468,9 @@ class StructureSE(Structure):
         self.ema = ema
         self._depolarisation_factor = depolarisation_factor
 
+        # we do this so micro-slicing can work
+        self.overall_sld = self.overall_ri
+
     sld_profile = None
 
     def __copy__(self):
@@ -833,9 +836,11 @@ class StructureSE(Structure):
         if isinstance(solvent, ScattererSE):
             solv = solvent.complex(self.wavelength)
 
+        if solv is None:
+            return slabs
+
         vf = slabs[..., 4]
         N = slabs[..., 1] + slabs[..., 2] * 1j
-
         N_avg = overall_ri(
             N,
             solv,
