@@ -759,8 +759,8 @@ class StructureSE(Structure):
             # put back saved_params
             params.pvals = saved_params
 
-        ax.plot(*self.sld_profile(align=align), color="red", zorder=20)
-        ax.set_ylabel("RI$")
+        ax.plot(*self.ri_profile(align=align), color="red", zorder=20)
+        ax.set_ylabel("$RI$")
         ax.set_xlabel("z / $\\AA$")
 
         return fig, ax
