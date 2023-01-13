@@ -14,11 +14,11 @@ def test_multiple_areas():
     for d in data:
         np.testing.assert_allclose(len(d), 5)
 
-    data = open_EP4file(pth / "19-1-1.dat" )
+    data = open_EP4file(pth / "19-1-1.dat")
     assert isinstance(data, DataSE)
     assert "Y pos" in data.metadata
 
-    data = open_EP4file(pth / "15-1-1.dat" )
+    data = open_EP4file(pth / "15-1-1.dat")
     assert isinstance(data, DataSE)
     assert "Y pos" in data.metadata
     assert len(data) == 11

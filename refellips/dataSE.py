@@ -410,17 +410,20 @@ def _loadEP4(df):
 
         area_indices = []
         for entry in df.iterrows():
-            if (not np.allclose(xpos, entry[1]['X_pos'], atol=0.2)) or (
-            not np.allclose(ypos, entry[1]['Y_pos'], atol=0.2)):
+            if (not np.allclose(xpos, entry[1]["X_pos"], atol=0.2)) or (
+                not np.allclose(ypos, entry[1]["Y_pos"], atol=0.2)
+            ):
                 idx = entry[0]
-                xpos = entry[1]['X_pos']
-                ypos = entry[1]['Y_pos']
+                xpos = entry[1]["X_pos"]
+                ypos = entry[1]["Y_pos"]
                 area_indices.append(idx)
         area_indices.append(len(df))
 
         output = []
         for i in range(len(area_indices) - 1):
-            pdf = df.loc[area_indices[i]:area_indices[i + 1] - 1][["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
+            pdf = df.loc[area_indices[i] : area_indices[i + 1] - 1][
+                ["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]
+            ]
 
             if len(pdf.index) > 0:
                 ave_pos = pdf.groupby(["AOI", "#Lambda"]).mean()
