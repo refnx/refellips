@@ -281,6 +281,9 @@ def open_EP4file(fname, reflect_delta=False):
     """
     df = pd.read_csv(fname, sep="\t", skiprows=[1])
     df = df.dropna(axis=0, how="any")
+    # normally the NaN are at the end of the file, but they can also be in
+    # the middle
+    df = df.reset_index()
 
     try:
         df["Time"]
