@@ -338,12 +338,12 @@ def _make_EP4dname(name, metadata):
         Helpful name for the data set.
 
     """
+    name = str(name)
     base = name[: -len("_20200929-083122.ds.dat")]
     if metadata["X pos"] is not None:
         base += f"_x={metadata['X pos']}mm_y={metadata['Y pos']}mm"
     if metadata["time"] is not None:
         base += f"_t={metadata['time']}s"
-
     return base
 
 
@@ -401,27 +401,37 @@ def _loadEP4(df):
         or len(df["Y_pos"].drop_duplicates()) > 1
     ):
         print("Treating as multiple locations")
-        df = df[["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
-        df.loc[:, "X_pos"] = custom_round(df["X_pos"], base=0.25)
-        df.loc[:, "Y_pos"] = custom_round(df["Y_pos"], base=0.25)
+
+        xpos = np.nan
+        ypos = np.nan
+
+        area_indices = []
+        for entry in df.iterrows():
+            if (not np.allclose(xpos, entry[1]['X_pos'], atol=0.2)) or (
+            not np.allclose(ypos, entry[1]['Y_pos'], atol=0.2)):
+                idx = entry[0]
+                xpos = entry[1]['X_pos']
+                ypos = entry[1]['Y_pos']
+                area_indices.append(idx)
+        area_indices.append(len(df))
 
         output = []
-        for x in df["X_pos"].drop_duplicates():
-            for y in df["Y_pos"].drop_duplicates():
-                pdf = df[np.logical_and(df["X_pos"] == x, df["Y_pos"] == y)]
-                pdf = pdf[["#Lambda", "AOI", "Psi", "Delta"]]
-                if len(pdf.index) > 0:
-                    ave_pos = pdf.groupby(["AOI", "#Lambda"]).mean()
-                    ave_pos = ave_pos.reset_index()
-                    summary = {
-                        "lambda": np.array(ave_pos["#Lambda"]),
-                        "aoi": np.array(ave_pos["AOI"]),
-                        "psi": np.array(ave_pos["Psi"]),
-                        "delta": np.array(ave_pos["Delta"]),
-                        "X pos": x,
-                        "Y pos": y,
-                    }
-                    output.append(summary)
+        for i in range(len(area_indices) - 1):
+            pdf = df.loc[area_indices[i]:area_indices[i + 1] - 1][["#Lambda", "AOI", "Psi", "Delta", "X_pos", "Y_pos"]]
+
+            if len(pdf.index) > 0:
+                ave_pos = pdf.groupby(["AOI", "#Lambda"]).mean()
+                ave_pos = ave_pos.reset_index()
+
+                summary = {
+                    "lambda": np.array(ave_pos["#Lambda"]),
+                    "aoi": np.array(ave_pos["AOI"]),
+                    "psi": np.array(ave_pos["Psi"]),
+                    "delta": np.array(ave_pos["Delta"]),
+                    "X pos": np.round(np.mean(ave_pos["X_pos"]), 2),
+                    "Y pos": np.round(np.mean(ave_pos["Y_pos"]), 2),
+                }
+                output.append(summary)
     else:
         print("Treating as single location")
         df = df[["#Lambda", "AOI", "Psi", "Delta"]]
