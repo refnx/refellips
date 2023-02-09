@@ -79,7 +79,8 @@ class ObjectiveSE(BaseObjective):
         if type(data) is DataSE:
             self.data = data
         else:
-            print("bad")
+            print("Be careful: data supplied to objective\
+            is not a DataSE instance.")
             self.data = DataSE(data=data)
 
         self.lnsigma = lnsigma
