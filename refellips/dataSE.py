@@ -403,7 +403,6 @@ def _loadEP4(df):
         len(df["X_pos"].drop_duplicates()) > 1
         or len(df["Y_pos"].drop_duplicates()) > 1
     ):
-
         xpos = np.nan
         ypos = np.nan
 
