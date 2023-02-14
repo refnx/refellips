@@ -403,8 +403,6 @@ def _loadEP4(df):
         len(df["X_pos"].drop_duplicates()) > 1
         or len(df["Y_pos"].drop_duplicates()) > 1
     ):
-        print("Treating as multiple locations")
-
         xpos = np.nan
         ypos = np.nan
 
@@ -418,6 +416,11 @@ def _loadEP4(df):
                 ypos = entry[1]["Y_pos"]
                 area_indices.append(idx)
         area_indices.append(len(df))
+
+        if len(area_indices) > 2:
+            print("Treating as multiple locations")
+        else:
+            print("Treating as single location")
 
         output = []
         for i in range(len(area_indices) - 1):
