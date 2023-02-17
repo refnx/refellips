@@ -12,7 +12,7 @@ packages = find_packages()
 MAJOR = 0
 MINOR = 0
 MICRO = 5
-ISRELEASED = False
+ISRELEASED = True
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 
