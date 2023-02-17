@@ -1,7 +1,7 @@
 setuptools
 nbsphinx
 jupyter-sphinx
-sphinxcontrib-bibtex<2.0.0
+sphinxcontrib-bibtex
 sphinx_rtd_theme
 pandoc
 scipy
