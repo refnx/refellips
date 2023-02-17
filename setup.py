@@ -11,8 +11,8 @@ packages = find_packages()
 # versioning
 MAJOR = 0
 MINOR = 0
-MICRO = 5
-ISRELEASED = True
+MICRO = 6
+ISRELEASED = False
 VERSION = f"{MAJOR}.{MINOR}.{MICRO}"
 
 
