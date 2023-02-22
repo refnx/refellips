@@ -367,8 +367,6 @@ def test_sellmeier():
     assert_allclose(psi, data.psi, rtol=0.011)
     assert_allclose(delta, data.delta, rtol=0.0022)
 
-    return data.wavelength, psi, delta, data.psi, data.delta
-
 
 def test_lorentz():
     A = [5, 10]
