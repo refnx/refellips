@@ -546,9 +546,7 @@ class TaucLorentz(ScattererSE):
             + Eg**2 * C**2
             - Ei**2 * (Ei**2 + 3 * Eg**2)
         )
-        a_atan = (energies**2 - Ei**2) * (
-            Ei**2 + Eg**2
-        ) + Eg**2 * C**2
+        a_atan = (energies**2 - Ei**2) * (Ei**2 + Eg**2) + Eg**2 * C**2
         alpha = np.sqrt(4 * Ei**2 - C**2)
         gamma = np.sqrt(Ei**2 - C**2 / 2)
         zeta4 = (energies**2 - gamma**2) ** 2 + 0.25 * alpha**2 * C**2
@@ -563,8 +561,7 @@ class TaucLorentz(ScattererSE):
             / alpha
             / Ei
             * np.log(
-                (Ei**2 + Eg**2 + alpha * Eg)
-                / (Ei**2 + Eg**2 - alpha * Eg)
+                (Ei**2 + Eg**2 + alpha * Eg) / (Ei**2 + Eg**2 - alpha * Eg)
             )
         )
         e1 -= (
