@@ -371,8 +371,14 @@ class Lorentz(ScattererSE):
         if not (len(self.Am) == len(self.Br) == len(self.En)):
             raise ValueError("A, B, E all have to be the same length")
 
+        self.Am.name = f"{name} - Lorentz Am"
+        self.Br.name = f"{name} - Lorentz Br"
+        self.En.name = f"{name} - Lorentz En"
+
         self._parameters.extend([self.Am, self.Br, self.En])
-        self.Einf = possibly_create_parameter(Einf)
+        self.Einf = possibly_create_parameter(
+            Einf, name=f"{name} - Lorentz Einf"
+        )
         self._parameters.append(self.Einf)
 
     @property
@@ -433,7 +439,11 @@ class Gauss(ScattererSE):
         if not (len(self.Am) == len(self.Br) == len(self.En)):
             raise ValueError("A, B, E all have to be the same length")
 
-        self.Einf = possibly_create_parameter(Einf)
+        self.Einf = possibly_create_parameter(Einf, name=f"{name} - Gauss Einf")
+        self.Am.name = f"{name} - Gauss Am"
+        self.Br.name = f"{name} - Gauss Br"
+        self.En.name = f"{name} - Gauss En"
+
         self._parameters.extend([self.Am, self.Br, self.En])
         self._parameters.append(self.Einf)
 
@@ -523,8 +533,14 @@ class TaucLorentz(ScattererSE):
         if not (len(self.Am) == len(self.C) == len(self.En)):
             raise ValueError("A, B, E all have to be the same length")
 
-        self.Einf = possibly_create_parameter(Einf)
-        self.Eg = possibly_create_parameter(Eg)
+        self.Einf = possibly_create_parameter(
+            Einf, name=f"{name} - TaucLorentz Einf"
+        )
+        self.Eg = possibly_create_parameter(Eg, name=f"{name} - TaucLorentz Eg")
+        self.Am.name = f"{name} - TaucLorentz Am"
+        self.C.name = f"{name} - TaucLorentz C"
+        self.En.name = f"{name} - TaucLorentz En"
+
         self._parameters.extend([self.Am, self.C, self.En, self.Einf, self.Eg])
 
     @property
