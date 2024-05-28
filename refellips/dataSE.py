@@ -542,3 +542,69 @@ def open_HORIBAfile(
     data = [data_df["nm"], data_df["AOI"], data_df["Psi"], data_df["Delta"]]
 
     return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
+
+def open_M2000file(fname):
+    """
+    Open and load in an Accurion EP4 formmated data file.
+    Typically a .dat file.
+
+    Note: This file parser has been written for specific Accurion ellipsometers
+    EP3 and EP4. No work has been done to ensure it is compatible with all
+    Accurion ellipsometers. If you have trouble with this parser contact the
+    maintainers through github.
+
+    Parameters
+    ----------
+    fname : file-handle or string
+        File to load the dataset from.
+
+    reflect_delta : bool
+        Option to reflect delta around 180 degrees (as WVASE would).
+
+    Returns
+    ----------
+    datasets : DataSE structure
+        Structure containing wavelength, angle of incidence, psi and delta.
+    """
+
+    data = []
+
+    with open('5-28-24 20nm PDMS in Air 19C 1.dat', mode ='r') as file:
+        __ = file.readline()
+        meas_info = file.readline()
+        __ = file.readline()
+    
+        count = 0
+        while True:
+            data_row = []
+            
+            count += 1
+            # print (count)
+         
+            # Get next line from file
+            line = file.readline().split('\t')
+            if not line:
+                break
+            if len(line) == 1:
+                break
+            data_row.append(float(line[0])) # Wavelength
+            data_row.append(float(line[1])) # Angle
+            data_row.append(float(line[2])) # Psi
+            data_row.append(float(line[3])) # Delta
+            data_row.append(float(line[4])) # Psi Error
+            data_row.append(float(line[5])) # Delta Error
+    
+            line = file.readline().split('\t')
+            data_row.append(float(line[2])) # Unknown
+            data_row.append(float(line[3])) # Depolarization %
+            data_row.append(float(line[4])) # Unknown
+    
+            line = file.readline().split('\t')
+            data_row.append(float(line[2])) # Unknown
+            data_row.append(float(line[3])) # Intensity
+            data_row.append(float(line[4])) # Unknown
+    
+            data.append(data_row)
+    
+    data = np.array(data)
+    return DataSE(data[:,[0,1,2,3]])
