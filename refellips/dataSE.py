@@ -569,7 +569,7 @@ def open_M2000file(fname):
 
     data = []
 
-    with open('5-28-24 20nm PDMS in Air 19C 1.dat', mode ='r') as file:
+    with open(fname, mode ='r') as file:
         __ = file.readline()
         meas_info = file.readline()
         __ = file.readline()
@@ -607,4 +607,4 @@ def open_M2000file(fname):
             data.append(data_row)
     
     data = np.array(data)
-    return DataSE(data[:,[0,1,2,3]])
+    return DataSE(data[:,[0,1,2,3]].T)
