@@ -96,7 +96,7 @@ def plot_ellipsdata(
                 ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
                 axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
 
-            xlab = "Wavelength (nm)"
+        xlab = "Wavelength (nm)"
 
     p = ax.scatter(x, data.psi, color="r")
     d = axt.scatter(x, data.delta, color="b")
