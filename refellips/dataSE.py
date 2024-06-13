@@ -543,7 +543,7 @@ def open_HORIBAfile(
 
     return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
 
-def open_M2000file(fname):
+def open_M2000file(fname, dropdatapoints=1):
     """
     Open and load in an Accurion EP4 formmated data file.
     Typically a .dat file.
@@ -607,4 +607,5 @@ def open_M2000file(fname):
             data.append(data_row)
     
     data = np.array(data)
+    data = data[::dropdatapoints]
     return DataSE(data[:,[0,1,2,3]].T)
