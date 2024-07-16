@@ -120,7 +120,7 @@ def coh_tmm(n_list, d_list, th_0, lam_vac):
     """
     # Convert lists to numpy arrays if they're not already.
     n_list = np.asarray(n_list)
-    d_list = np.asfarray(d_list)
+    d_list = np.asarray(d_list, np.float64)
     num_layers = n_list.size
 
     th_0, lam_vac = [np.array(a) for a in np.broadcast_arrays(th_0, lam_vac)]
@@ -258,7 +258,7 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
 
 
     """
-    AOI = np.asfarray(AOI)
+    AOI = np.asarray(AOI, np.float64)
     AOI = AOI * (np.pi / 180)
 
     layers[0, 2] = 0  # infinate medium cannot have an extinction coeff

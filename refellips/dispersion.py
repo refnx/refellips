@@ -392,7 +392,7 @@ class Lorentz(ScattererSE):
         A = np.array(self.Am)[:, None]
         B = np.array(self.Br)[:, None]
         E = np.array(self.En)[:, None]
-        _e = np.asfarray(energy)
+        _e = np.asarray(energy, np.float64)
         v = A / (E**2 - _e**2 - 1j * B * _e)
         r = np.atleast_1d(np.sum(v, axis=0) + self.Einf.value)
 
@@ -458,7 +458,7 @@ class Gauss(ScattererSE):
         A = np.array(self.Am)[:, None]
         B = np.array(self.Br)[:, None]
         E = np.array(self.En)[:, None]
-        energies = np.asfarray(energy)
+        energies = np.asarray(energy, np.float64)
 
         # TODO cache if params don't change
         _e_pad = np.linspace(-20, 20, 2048)
@@ -555,7 +555,7 @@ class TaucLorentz(ScattererSE):
         C = np.array(self.C)[:, None]
         Ei = np.array(self.En)[:, None]
         Eg = self.Eg.value
-        energies = np.asfarray(energy)
+        energies = np.asarray(energy, np.float64)
 
         a_ln = (
             (Eg**2 - Ei**2) * energies**2
