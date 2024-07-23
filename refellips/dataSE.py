@@ -609,3 +609,15 @@ def open_M2000file(fname, dropdatapoints=1):
     data = np.array(data)
     data = data[::dropdatapoints]
     return DataSE(data[:,[0,1,2,3]].T)
+
+
+def open_woolam_time_series(fname, take_every=1):
+    df = pd.read_csv(fname, skiprows=4, sep='\t',
+                     names=['Wavelength, nm', 'Angle of incidence, ˚', 'Psi', 'Delta', 'Psi error', 'Delta error', 'None', 'Time, min'])
+
+    time_dict = {}
+    for idx, (time, subdf) in enumerate(df.groupby('Time, min')):
+        if idx%take_every == 0:
+            time_dict[np.round(time*60,1)] = DataSE(np.array([subdf['Wavelength, nm'],subdf['Angle of incidence, ˚'],subdf['Psi'],subdf['Delta']])[:,::5])
+    return time_dict
+
