@@ -297,6 +297,7 @@ class ReflectModelSE:
         self,
         structure,
         delta_offset=0,
+        angle_offset=0,
         name=None,
     ):
         if not isinstance(structure, StructureSE):
@@ -308,6 +309,10 @@ class ReflectModelSE:
 
         self.delta_offset = possibly_create_parameter(
             delta_offset, name="delta offset"
+        )
+
+        self.angle_offset = possibly_create_parameter(
+            angle_offset, name="angle offset"
         )
 
         # to make it more like a refnx.analysis.Model
@@ -338,8 +343,9 @@ class ReflectModelSE:
     def __repr__(self):
         return (
             f"ReflectModel({self._structure!r}, name={self.name!r},"
-            f" delta_offset = {self.delta_offset.value!r} "
-        )
+            f" delta_offset = {self.delta_offset.value!r},"
+            f" angle_offset = {self.angle_offset.value!r},"
+            )
 
     def model(self, wavelength_aoi, p=None):
         r"""
@@ -364,6 +370,8 @@ class ReflectModelSE:
             self.parameters.pvals = np.array(p)
 
         wavelength, aois = wavelength_aoi.T
+        aois += self.angle_offset.value
+
         psi = np.zeros_like(wavelength)
         delta = np.zeros_like(wavelength)
 
@@ -416,6 +424,7 @@ class ReflectModelSE:
 
         p = Parameters(name="instrument parameters")
         p.extend([self.delta_offset])
+        p.extend([self.angle_offset])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
