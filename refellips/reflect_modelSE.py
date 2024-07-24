@@ -424,8 +424,7 @@ class ReflectModelSE:
         self._structure = structure
 
         p = Parameters(name="instrument parameters")
-        p.extend([self.delta_offset])
-        p.extend([self.angle_offset])
+        p.extend([self.delta_offset, self.angle_offset])
 
         self._parameters = Parameters(name=self.name)
         self._parameters.extend([p, structure.parameters])
