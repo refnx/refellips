@@ -293,12 +293,12 @@ class Sellmeier(ScattererSE):
             wav = wavelength
 
         # Convert between μm & nm (constants are typically given in μm)
-        wav *= 1e-3
+        wav_um = wav * 1e-3
 
         real = np.sqrt(
             self.Einf.value
-            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
-            - (self.P.value * wav**2)
+            + (self.Am.value * wav_um**2) / (wav_um**2 - self.En.value**2)
+            - (self.P.value * wav_um**2)
         )
         return real + 1j * 0.0
 
@@ -311,12 +311,12 @@ class Sellmeier(ScattererSE):
             wav = wavelength
 
         # Convert between μm & nm (constants are typically given in μm)
-        wav *= 1e-3
+        wav_um = wav * 1e-3
 
         real = (
             self.Einf.value
-            + (self.Am.value * wav**2) / (wav**2 - self.En.value**2)
-            - (self.P.value * wav**2)
+            + (self.Am.value * wav_um**2) / (wav_um**2 - self.En.value**2)
+            - (self.P.value * wav_um**2)
         )
 
         return real + 1j * 0
