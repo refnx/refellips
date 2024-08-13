@@ -178,9 +178,9 @@ class ObjectiveSE(BaseObjective):
 
         wavelength, aoi, psi_d, delta_d = self.data.data
         wavelength_aoi = np.c_[wavelength, aoi]
-
         psi, delta = self.model(wavelength_aoi)
-        return np.r_[psi - psi_d, delta - delta_d]
+        delta_err = 2*np.rad2deg(np.arcsin(np.sin(np.deg2rad(delta/2)) - np.sin(np.deg2rad(delta_d/2))))
+        return np.r_[psi - psi_d, delta_err]
 
     def chisqr(self, pvals=None):
         """
