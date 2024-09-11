@@ -1,4 +1,4 @@
 [project]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 name = "refellips"
 dynamic=["version", "description", "readme", "license", "classifiers", "urls", "authors"]
