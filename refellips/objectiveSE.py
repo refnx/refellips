@@ -379,8 +379,9 @@ class ObjectiveSE(BaseObjective):
         # here just set it to unity
         y_err = 1
         if self.lnsigma is not None:
+            _model = np.r_[psi, delta]
             var_y = (
-                y_err * y_err + np.exp(2 * float(self.lnsigma)) * model * model
+                y_err * y_err + np.exp(2 * float(self.lnsigma)) * _model * _model
             )
         else:
             var_y = y_err**2

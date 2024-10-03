@@ -4,6 +4,7 @@
 A basic representation of a 1D dataset
 """
 
+import copy
 import numpy as np
 import pandas as pd
 from refnx._lib import possibly_open_file
