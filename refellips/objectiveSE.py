@@ -179,7 +179,9 @@ class ObjectiveSE(BaseObjective):
         wavelength, aoi, psi_d, delta_d = self.data.data
         wavelength_aoi = np.c_[wavelength, aoi]
         psi, delta = self.model(wavelength_aoi)
-        delta_err = 2*np.rad2deg(np.arcsin(np.sin(np.deg2rad(delta/2)) - np.sin(np.deg2rad(delta_d/2))))
+        delta_err = 2 * np.rad2deg(
+            np.arcsin(np.sin(np.deg2rad(delta / 2)) - np.sin(np.deg2rad(delta_d / 2)))
+        )
         return np.r_[psi - psi_d, delta_err]
 
     def chisqr(self, pvals=None):
@@ -317,9 +319,7 @@ class ObjectiveSE(BaseObjective):
         logp = np.sum(
             [
                 param.logp()
-                for param in f_unique(
-                    p for p in flatten(self.parameters) if p.vary
-                )
+                for param in f_unique(p for p in flatten(self.parameters) if p.vary)
             ]
         )
 
@@ -375,9 +375,7 @@ class ObjectiveSE(BaseObjective):
         # here just set it to unity
         y_err = 1
         if self.lnsigma is not None:
-            var_y = (
-                y_err * y_err + np.exp(2 * float(self.lnsigma)) * model * model
-            )
+            var_y = y_err * y_err + np.exp(2 * float(self.lnsigma)) * model * model
         else:
             var_y = y_err**2
 
@@ -494,9 +492,7 @@ class ObjectiveSE(BaseObjective):
         scale = 1.0
         # scale by reduced chi2 if experimental uncertainties weren't used.
         if not (self.weighted):
-            scale = self.chisqr() / (
-                n_datapoints - len(self.varying_parameters())
-            )
+            scale = self.chisqr() / (n_datapoints - len(self.varying_parameters()))
 
         return covar * scale
 
