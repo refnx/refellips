@@ -72,7 +72,11 @@ class DataSE(object):
         self.name = name
 
         # If a file, then open and load the file.
-        if hasattr(data, "read") or type(data) is str or isinstance(data, PurePath):
+        if (
+            hasattr(data, "read")
+            or type(data) is str
+            or isinstance(data, PurePath)
+        ):
             self.load(data)
             self.filename = data
 
@@ -208,7 +212,9 @@ class DataSE(object):
         header = "wavelength\tAOI\tPsi\tDelta"
         np.savetxt(
             f,
-            np.column_stack((self._wavelength, self._aoi, self._psi, self._delta)),
+            np.column_stack(
+                (self._wavelength, self._aoi, self._psi, self._delta)
+            ),
             delimiter="\t",
             header=header,
         )
@@ -306,7 +312,9 @@ def open_EP4file(fname, reflect_delta=False):
         del op["psi"]
         del op["delta"]
         name = _make_EP4dname(fname, op)
-        datasets.append(DataSE(data, name=name, reflect_delta=reflect_delta, **op))
+        datasets.append(
+            DataSE(data, name=name, reflect_delta=reflect_delta, **op)
+        )
 
     if len(datasets) == 1:
         return datasets[0]
@@ -392,7 +400,8 @@ def _loadEP4(df):
         loc_data = False
 
     if loc_data and (
-        len(df["X_pos"].drop_duplicates()) > 1 or len(df["Y_pos"].drop_duplicates()) > 1
+        len(df["X_pos"].drop_duplicates()) > 1
+        or len(df["Y_pos"].drop_duplicates()) > 1
     ):
         xpos = np.nan
         ypos = np.nan
@@ -451,7 +460,9 @@ def _loadEP4(df):
     return output
 
 
-def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]):
+def open_HORIBAfile(
+    fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
+):
     """
     Opening and loading in a data file created by a Horiba ellipsometer. Data
     file loaded should be of the Horiba file format .spe.
@@ -500,7 +511,9 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
             else:
                 if not len(line):
                     MDingest = False
-                    if not len(metadata[MDlabel]):  # there is no metadata for entry
+                    if not len(
+                        metadata[MDlabel]
+                    ):  # there is no metadata for entry
                         metadata[MDlabel] = None  # Set metadata to none
                     elif len(metadata[MDlabel]) == 1:  # there is only one entry
                         metadata[MDlabel] = metadata[MDlabel][
@@ -508,7 +521,9 @@ def open_HORIBAfile(fname, reflect_delta=False, lambda_cutoffs=[-np.inf, np.inf]
                         ]  # remove data from list
 
                 else:  # there is metadata in the line
-                    metadata[MDlabel].append(line)  # append line to metadata entry
+                    metadata[MDlabel].append(
+                        line
+                    )  # append line to metadata entry
 
     data_df = pd.read_csv(
         fname,
@@ -684,7 +699,9 @@ def _open_FilmSenseFile_standard(f):
             "Delta",
             "Psi",
         ],
-        index=np.linspace(1, metadata["numwvls"], metadata["numwvls"], dtype=int),
+        index=np.linspace(
+            1, metadata["numwvls"], metadata["numwvls"], dtype=int
+        ),
     )
 
     for i in range(metadata["numwvls"]):
@@ -739,7 +756,9 @@ def _open_FilmSenseFile_dynamic(f):
             "Delta",
             "Psi",
         ],
-        index=np.linspace(1, metadata["numwvls"], metadata["numwvls"], dtype=int),
+        index=np.linspace(
+            1, metadata["numwvls"], metadata["numwvls"], dtype=int
+        ),
     )
 
     for i in range(metadata["numwvls"]):
@@ -779,6 +798,8 @@ def _open_FilmSenseFile_dynamic(f):
         AOI = np.ones_like(Psi) * metadata["nomAOI"]
         Wvl = np.array(df["Wavelength"]).astype(np.float64)
 
-        time_series[time] = DataSE(data=[Wvl, AOI, Psi, Delta], reflect_delta=False)
+        time_series[time] = DataSE(
+            data=[Wvl, AOI, Psi, Delta], reflect_delta=False
+        )
 
     return time_series

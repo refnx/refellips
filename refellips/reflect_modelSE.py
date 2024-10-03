@@ -346,7 +346,7 @@ class ReflectModelSE:
             f"ReflectModel({self._structure!r}, name={self.name!r},"
             f" delta_offset = {self.delta_offset.value!r},"
             f" angle_offset = {self.angle_offset.value!r},"
-            )
+        )
 
     def model(self, wavelength_aoi, p=None):
         r"""
