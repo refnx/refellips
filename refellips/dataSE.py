@@ -4,6 +4,7 @@
 A basic representation of a 1D dataset
 """
 
+import copy
 import numpy as np
 import pandas as pd
 from refnx._lib import possibly_open_file
@@ -542,3 +543,264 @@ def open_HORIBAfile(
     data = [data_df["nm"], data_df["AOI"], data_df["Psi"], data_df["Delta"]]
 
     return DataSE(data, name=name, reflect_delta=reflect_delta, **metadata)
+
+
+def open_M2000file(fname, dropdatapoints=1):
+    """
+    Open and load in an Accurion EP4 formmated data file.
+    Typically a .dat file.
+
+    Note: This file parser has been written for specific Accurion ellipsometers
+    EP3 and EP4. No work has been done to ensure it is compatible with all
+    Accurion ellipsometers. If you have trouble with this parser contact the
+    maintainers through github.
+
+    Parameters
+    ----------
+    fname : file-handle or string
+        File to load the dataset from.
+
+    reflect_delta : bool
+        Option to reflect delta around 180 degrees (as WVASE would).
+
+    Returns
+    ----------
+    datasets : DataSE structure
+        Structure containing wavelength, angle of incidence, psi and delta.
+    """
+
+    data = []
+
+    with open(fname, mode="r") as file:
+        __ = file.readline()
+        meas_info = file.readline()
+        __ = file.readline()
+
+        count = 0
+        while True:
+            data_row = []
+
+            count += 1
+            # print (count)
+
+            # Get next line from file
+            line = file.readline().split("\t")
+            if not line:
+                break
+            if len(line) == 1:
+                break
+            data_row.append(float(line[0]))  # Wavelength
+            data_row.append(float(line[1]))  # Angle
+            data_row.append(float(line[2]))  # Psi
+            data_row.append(float(line[3]))  # Delta
+            data_row.append(float(line[4]))  # Psi Error
+            data_row.append(float(line[5]))  # Delta Error
+
+            line = file.readline().split("\t")
+            data_row.append(float(line[2]))  # Unknown
+            data_row.append(float(line[3]))  # Depolarization %
+            data_row.append(float(line[4]))  # Unknown
+
+            line = file.readline().split("\t")
+            data_row.append(float(line[2]))  # Unknown
+            data_row.append(float(line[3]))  # Intensity
+            data_row.append(float(line[4]))  # Unknown
+
+            data.append(data_row)
+
+    data = np.array(data)
+    data = data[::dropdatapoints]
+    return DataSE(data[:, [0, 1, 2, 3]].T)
+
+
+def open_woolam_time_series(fname, take_every=1):
+    df = pd.read_csv(
+        fname,
+        skiprows=4,
+        sep="\t",
+        names=[
+            "Wavelength, nm",
+            "Angle of incidence, ˚",
+            "Psi",
+            "Delta",
+            "Psi error",
+            "Delta error",
+            "None",
+            "Time, min",
+        ],
+    )
+
+    time_dict = {}
+    for idx, (time, subdf) in enumerate(df.groupby("Time, min")):
+        if idx % take_every == 0:
+            time_dict[np.round(time * 60, 1)] = DataSE(
+                np.array(
+                    [
+                        subdf["Wavelength, nm"],
+                        subdf["Angle of incidence, ˚"],
+                        subdf["Psi"],
+                        subdf["Delta"],
+                    ]
+                )[:, ::5]
+            )
+
+    return time_dict
+
+
+def open_FilmSenseFile(fname):
+    with open(fname, "r") as f:
+        header = f.readline()
+        if header == "Film_Sense_Data\n":
+            return _open_FilmSenseFile_standard(f)
+        elif header == "Film_Sense_Dyn_Data\n":
+            return _open_FilmSenseFile_dynamic(f)
+        else:
+            assert False, "Filetype not recognized"
+
+
+def _parse_FilmSenseFileHeader(firstline, mode="standard"):
+    firstline = firstline[:-1]  # remove newline char
+    firstline = firstline.split("\t")
+
+    metadata = {
+        "numwvls": int(firstline[0]),
+        "numdatasets": int(firstline[1]),
+        "nomAOI": float(firstline[2]),
+    }
+
+    if mode == "standard":
+        metadata["AlignX"] = float(firstline[3])
+        metadata["AlignY"] = float(firstline[4])
+        metadata["AvInten"] = float(firstline[5])
+    elif mode == "dynamic":
+        metadata["?"] = float(firstline[3])
+    else:
+        assert False, "mode not recognized"
+
+    return metadata
+
+
+def _open_FilmSenseFile_standard(f):
+    metadata = _parse_FilmSenseFileHeader(f.readline())
+
+    # Note - in the documentation the first numwvls lines are only supposed
+    # have 4 columns. In these data files they have 8.
+
+    df = pd.DataFrame(
+        columns=[
+            "Wavelength",
+            "led_Br",
+            "led_ExpL",
+            "led_ExpR",
+            "N",
+            "C",
+            "S",
+            "P",
+            "Intensity",
+            "Delta",
+            "Psi",
+        ],
+        index=np.linspace(
+            1, metadata["numwvls"], metadata["numwvls"], dtype=int
+        ),
+    )
+
+    for i in range(metadata["numwvls"]):
+        line = f.readline().split("\t")
+        df.iloc[i]["Wavelength"] = float(line[0])
+        df.iloc[i]["led_Br"] = float(line[1])
+        df.iloc[i]["led_ExpL"] = float(line[2])
+        df.iloc[i]["led_ExpR"] = float(line[3])
+
+    for i in range(metadata["numwvls"]):
+        line = f.readline().split("\t")
+        df.iloc[i]["N"] = float(line[0])
+        df.iloc[i]["C"] = float(line[1])
+        df.iloc[i]["S"] = float(line[2])
+        df.iloc[i]["P"] = float(line[3])
+        df.iloc[i]["Intensity"] = float(line[4])
+
+    S = np.array(df["S"], dtype=np.float32)
+    N = np.array(df["N"], dtype=np.float32)
+    C = np.array(df["C"], dtype=np.float32)
+    df["Psi"] = np.rad2deg(np.arccos(N) / 2)
+    # Delta1 = 180+np.rad2deg(np.arctan(np.array(df['S'], dtype=np.float32)/np.array(df['C'], dtype=np.float32)))
+
+    df["Delta"] = np.rad2deg(np.angle((C + 1j * S) / (1 + N)))
+
+    Psi = np.array(df["Psi"]).astype(np.float64)
+    Delta = np.array(df["Delta"]).astype(np.float64)
+
+    Deltamask = Delta < 0
+    Delta[Deltamask] = 360 + Delta[Deltamask]
+
+    AOI = np.ones_like(Psi) * metadata["nomAOI"]
+    Wvl = np.array(df["Wavelength"]).astype(np.float64)
+
+    return DataSE(data=[Wvl, AOI, Psi, Delta], reflect_delta=False)
+
+
+def _open_FilmSenseFile_dynamic(f):
+    metadata = _parse_FilmSenseFileHeader(f.readline(), mode="dynamic")
+
+    base_df = pd.DataFrame(
+        columns=[
+            "Wavelength",
+            "led_Br",
+            "led_ExpL",
+            "led_ExpR",
+            "N",
+            "C",
+            "S",
+            "P",
+            "Intensity",
+            "Delta",
+            "Psi",
+        ],
+        index=np.linspace(
+            1, metadata["numwvls"], metadata["numwvls"], dtype=int
+        ),
+    )
+
+    for i in range(metadata["numwvls"]):
+        line = f.readline().split("\t")
+        base_df.iloc[i]["Wavelength"] = float(line[0])
+        base_df.iloc[i]["led_Br"] = float(line[1])
+        base_df.iloc[i]["led_ExpL"] = float(line[2])
+        base_df.iloc[i]["led_ExpR"] = float(line[3])
+
+    dataheader = f.readline().split("\t")
+
+    time_series = {}
+    for i in range(metadata["numdatasets"]):
+        line = f.readline()[:-2]
+        line = line.split("\t")
+        time = float(line[0])
+        df = copy.deepcopy(base_df)
+
+        for j in range(metadata["numwvls"]):
+            J = j * 5
+            df.iloc[j]["N"] = float(line[J + 1])
+            df.iloc[j]["C"] = float(line[J + 2])
+            df.iloc[j]["S"] = float(line[J + 3])
+            df.iloc[j]["P"] = float(line[J + 4])
+            df.iloc[j]["Intensity"] = float(line[J + 5])
+
+        S = np.array(df["S"], dtype=np.float32)
+        N = np.array(df["N"], dtype=np.float32)
+        C = np.array(df["C"], dtype=np.float32)
+        df["Psi"] = np.rad2deg(np.arccos(N) / 2)
+        df["Delta"] = np.rad2deg(np.angle((C + 1j * S) / (1 + N)))
+
+        Psi = np.array(df["Psi"]).astype(np.float64)
+        Delta = np.array(df["Delta"]).astype(np.float64)
+        Deltamask = Delta < 0
+        Delta[Deltamask] = 360 + Delta[Deltamask]
+        AOI = np.ones_like(Psi) * metadata["nomAOI"]
+        Wvl = np.array(df["Wavelength"]).astype(np.float64)
+
+        time_series[time] = DataSE(
+            data=[Wvl, AOI, Psi, Delta], reflect_delta=False
+        )
+
+    return time_series
