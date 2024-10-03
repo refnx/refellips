@@ -369,8 +369,6 @@ class ObjectiveSE(BaseObjective):
 
         psi, delta = self.model(wavelength_aoi)
 
-        model = np.r_[psi, delta]
-
         logl = 0.0
 
         # TODO investigate ellipsometry uncertainties
@@ -387,7 +385,8 @@ class ObjectiveSE(BaseObjective):
         if self.weighted:
             logl += np.log(2 * np.pi * var_y)
 
-        logl += (np.r_[psi_d, delta_d] - model) ** 2 / var_y
+        res = self.residuals(None)
+        logl += (res) ** 2 / var_y
 
         # nans play havoc
         if np.isnan(logl).any():
