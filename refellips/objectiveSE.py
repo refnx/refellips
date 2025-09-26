@@ -18,9 +18,11 @@ from refnx._lib import unique as f_unique
 from refnx._lib import flatten
 
 
-def circular_distance(angle1, angle2, period=2 * np.pi):
+def circular_distance(angle1, angle2, period=360):
     """
     Calculates the circular distance between two angles.
+    Units (rad or deg) do not matter as long as they are
+    consistent.
 
     Parameters
     ----------
@@ -29,7 +31,7 @@ def circular_distance(angle1, angle2, period=2 * np.pi):
     angle2 : float, np.ndarray
         Second angle
     period : float
-        The period of the circular domain (e.g., 2*np.pi for full circle).
+        The period of the circular domain (e.g.,360 for full circle).
 
     Returns:
         float or np.ndarray: The shortest circular distance between the angles.
