@@ -22,10 +22,14 @@ def circular_distance(angle1, angle2, period=2 * np.pi):
     """
     Calculates the circular distance between two angles.
 
-    Args:
-        angle1 (float or np.ndarray): The first angle(s) in radians.
-        angle2 (float or np.ndarray): The second angle(s) in radians.
-        period (float): The period of the circular domain (e.g., 2*np.pi for full circle).
+    Parameters
+    ----------
+    angle1 : float, np.ndarray
+        First angle
+    angle2 : float, np.ndarray
+        Second angle
+    period : float
+        The period of the circular domain (e.g., 2*np.pi for full circle).
 
     Returns:
         float or np.ndarray: The shortest circular distance between the angles.
