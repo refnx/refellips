@@ -18,7 +18,7 @@ from refnx._lib import unique as f_unique
 from refnx._lib import flatten
 
 
-def circular_distance(angle1, angle2, period=2*np.pi):
+def circular_distance(angle1, angle2, period=2 * np.pi):
     """
     Calculates the circular distance between two angles.
 
