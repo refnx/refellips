@@ -18,6 +18,28 @@ from refnx._lib import unique as f_unique
 from refnx._lib import flatten
 
 
+def circular_distance(angle1, angle2, period=360):
+    """
+    Calculates the circular distance between two angles.
+    Units (rad or deg) do not matter as long as they are
+    consistent.
+
+    Parameters
+    ----------
+    angle1 : float, np.ndarray
+        First angle
+    angle2 : float, np.ndarray
+        Second angle
+    period : float
+        The period of the circular domain (e.g.,360 for full circle).
+
+    Returns:
+        float or np.ndarray: The shortest circular distance between the angles.
+    """
+    diff = np.abs(angle1 - angle2)
+    return np.minimum(diff, period - diff)
+
+
 class ObjectiveSE(BaseObjective):
     """
     Objective function for using with curvefitters such as
@@ -178,9 +200,9 @@ class ObjectiveSE(BaseObjective):
 
         wavelength, aoi, psi_d, delta_d = self.data.data
         wavelength_aoi = np.c_[wavelength, aoi]
-
         psi, delta = self.model(wavelength_aoi)
-        return np.r_[psi - psi_d, delta - delta_d]
+        delta_err = circular_distance(delta, delta_d, period=360)
+        return np.r_[psi - psi_d, delta_err]
 
     def chisqr(self, pvals=None):
         """
@@ -369,16 +391,16 @@ class ObjectiveSE(BaseObjective):
 
         psi, delta = self.model(wavelength_aoi)
 
-        model = np.r_[psi, delta]
-
         logl = 0.0
 
         # TODO investigate ellipsometry uncertainties
         # here just set it to unity
         y_err = 1
         if self.lnsigma is not None:
+            _model = np.r_[psi, delta]
             var_y = (
-                y_err * y_err + np.exp(2 * float(self.lnsigma)) * model * model
+                y_err * y_err
+                + np.exp(2 * float(self.lnsigma)) * _model * _model
             )
         else:
             var_y = y_err**2
@@ -387,7 +409,8 @@ class ObjectiveSE(BaseObjective):
         if self.weighted:
             logl += np.log(2 * np.pi * var_y)
 
-        logl += (np.r_[psi_d, delta_d] - model) ** 2 / var_y
+        res = self.residuals(None)
+        logl += (res) ** 2 / var_y
 
         # nans play havoc
         if np.isnan(logl).any():
