@@ -512,7 +512,7 @@ def test_residuals():
     obj_delta_res = res[int(len(res) / 2) :]
 
     test_psi_res = psi_2 - psi_1
-    test_delta_res = (delta_2 - delta_1 + 180) % 360 - 180
+    test_delta_res = np.abs((delta_2 - delta_1 + 180) % 360 - 180)
 
     assert_allclose(test_psi_res, obj_psi_res, rtol=0.002)
     assert_allclose(test_delta_res, obj_delta_res, rtol=0.003)
