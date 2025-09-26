@@ -18,6 +18,22 @@ from refnx._lib import unique as f_unique
 from refnx._lib import flatten
 
 
+def circular_distance(angle1, angle2, period=2*np.pi):
+    """
+    Calculates the circular distance between two angles.
+
+    Args:
+        angle1 (float or np.ndarray): The first angle(s) in radians.
+        angle2 (float or np.ndarray): The second angle(s) in radians.
+        period (float): The period of the circular domain (e.g., 2*np.pi for full circle).
+
+    Returns:
+        float or np.ndarray: The shortest circular distance between the angles.
+    """
+    diff = np.abs(angle1 - angle2)
+    return np.minimum(diff, period - diff)
+
+
 class ObjectiveSE(BaseObjective):
     """
     Objective function for using with curvefitters such as
@@ -179,7 +195,7 @@ class ObjectiveSE(BaseObjective):
         wavelength, aoi, psi_d, delta_d = self.data.data
         wavelength_aoi = np.c_[wavelength, aoi]
         psi, delta = self.model(wavelength_aoi)
-        delta_err = (delta - delta_d + 180) % 360 - 180
+        delta_err = circular_distance(delta, delta_d, period=360)
         return np.r_[psi - psi_d, delta_err]
 
     def chisqr(self, pvals=None):
