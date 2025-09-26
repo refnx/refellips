@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""
+""" "
 A basic representation of a 1D dataset
 """
 
