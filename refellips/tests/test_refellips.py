@@ -477,3 +477,42 @@ def test_TaucLorentz():
 
     assert_allclose(psi, data.psi, rtol=0.0176)
     assert_allclose(delta, data.delta, rtol=0.0066)
+
+
+def test_residuals():
+    """
+    Specifically testing for correct delta error handling (delta is an angle between 0 and 360)
+    """
+    wavelength = np.linspace(400, 900, 100)
+    aoi = 70
+
+    si = load_material("silicon")
+    sio2 = load_material("silica")
+    polymer = Cauchy(A=1.43, B=0.0005)
+    solvent = Cauchy(A=1.45, B=0.0005)
+
+    polymer_layer_1 = polymer(55)
+    polymer_layer_2 = polymer(45)
+
+    struc_1 = solvent() | polymer_layer_1 | sio2(20) | si()
+    struc_2 = solvent() | polymer_layer_2 | sio2(20) | si()
+
+    model_1 = ReflectModelSE(struc_1)
+    model_2 = ReflectModelSE(struc_2)
+
+    psi_1, delta_1 = model_1(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+    psi_2, delta_2 = model_2(np.c_[wavelength, np.ones_like(wavelength) * aoi])
+    faux_data = DataSE(
+        [wavelength, np.ones_like(wavelength) * aoi, psi_1, delta_1]
+    )
+
+    obj = ObjectiveSE(model=model_2, data=faux_data)
+    res = obj.residuals()
+    obj_psi_res = res[: int(len(res) / 2)]
+    obj_delta_res = res[int(len(res) / 2) :]
+
+    test_psi_res = psi_2 - psi_1
+    test_delta_res = (delta_2 - delta_1 + 180) % 360 - 180
+
+    assert_allclose(test_psi_res, obj_psi_res, rtol=0.002)
+    assert_allclose(test_delta_res, obj_delta_res, rtol=0.003)
