@@ -238,16 +238,26 @@ def Delta_Psi_TMM(AOI, layers, wavelength, delta_offset, reflect_delta=False):
         Wavelength of light. Units = nm
     layers: np.ndarray
         coefficients required for the calculation, has shape (2 + N, 4),
-        where N is the number of layers
-        layers[0, 1] - refractive index of fronting
-        layers[0, 2] - extinction coefficent of fronting
-        layers[N, 0] - thickness of layer N
-        layers[N, 1] - refractive index of layer N
-        layers[N, 2] - extinction coefficent of layer N
-        layers[N, 3] - roughness between layer N-1/N (IGNORED!)
-        layers[-1, 1] - refractive index of backing
-        layers[-1, 2] - extinction coefficent of backing
-        layers[-1, 3] - roughness between backing and last layer (IGNORED!)
+        where N is the number of layers.
+
+        - layers[0, 1]
+            refractive index of fronting
+        - layers[0, 2]
+            extinction coefficent of fronting
+        - layers[N, 0]
+            thickness of layer N
+        - layers[N, 1]
+            refractive index of layer N
+        - layers[N, 2]
+            extinction coefficent of layer N
+        - layers[N, 3]
+            roughness between layer N-1/N (IGNORED!)
+        - layers[-1, 1]
+            refractive index of backing
+        - layers[-1, 2]
+            extinction coefficent of backing
+        - layers[-1, 3]
+            roughness between backing and last layer (IGNORED!)
 
     Returns
     -------
@@ -288,7 +298,7 @@ class ReflectModelSE:
     r"""
     Parameters
     ----------
-    structure : refnx.reflect.Structure
+    structure : refellips.StructureSE
         The interfacial structure.
     name : str, optional
         Name of the Model
