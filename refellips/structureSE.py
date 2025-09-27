@@ -268,7 +268,7 @@ class SlabSE(ComponentSE):
 
     def slabs(self, structure=None):
         """
-        Slab representation of this component. See :class:`Component.slabs`
+        Slab representation of this component. See :class:`ComponentSE.slabs`
         """
         # speculative shortcut to prevent a number of attribute retrievals
         if self.ri.dispersive:

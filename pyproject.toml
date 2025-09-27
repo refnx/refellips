@@ -2,3 +2,7 @@
 requires-python = ">=3.9"
 name = "refellips"
 dynamic=["version", "description", "readme", "license", "classifiers", "urls", "authors"]
+
+[tool.black]
+line-length = 79
+extend-exclude="refnx/_lib/emcee/|refnx/_lib/ptemcee/|benchmarks"

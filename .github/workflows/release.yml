@@ -1,0 +1,67 @@
+# This action releases refnx on PyPI for every version tagged commit (e.g. v0.0.1)
+name: PyPI/Github Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  make_sdist:
+    name: Make sdist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+    - name: Build sdist
+      run: pipx run build --sdist
+
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: wheels-sdist
+        path: dist/*.tar.gz
+
+
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    needs: [ make_sdist ]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/refellips
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+
+    steps:
+    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        pattern: wheels-*
+        merge-multiple: true
+        path: dist
+
+    - name: Upload to PyPI
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      with:
+        # repository-url: https://test.pypi.org/legacy/
+        skip_existing: true
+
+
+  release-github:
+    runs-on: ubuntu-latest
+    needs: [ pypi-publish ]
+
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        pattern: wheels-*
+        merge-multiple: true
+        path: dist
+
+    - uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af # v1.18.0
+      with:
+        artifacts: "dist/refellips*.tar.gz"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        generateReleaseNotes: true
