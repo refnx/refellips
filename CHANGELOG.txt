@@ -16,3 +16,4 @@ First release on PyPI
 
 0.0.6
 -----
+- added circular_difference to calculate shortest difference between two angles.
