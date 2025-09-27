@@ -35,6 +35,8 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
+        if: github.repository == 'refnx/refellips' && matrix.python-version == "3.13"
+
         name: refellips-linux-${{ matrix.python-version }}
         path: dist/
 
