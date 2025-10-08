@@ -251,7 +251,7 @@ class DataSE(object):
 
         """
         if self.filename is not None:
-            with open(self.filename) as f:
+            with possibly_open_file(self.filename) as f:
                 self.load(f)
 
 
@@ -497,7 +497,7 @@ def open_HORIBAfile(
     linenodict = {}
     MDingest = False
 
-    with open(fname, "r") as f:
+    with possibly_open_file(fname, "r") as f:
         lines = f.readlines()
 
         for i, line in enumerate(lines):
