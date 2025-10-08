@@ -584,7 +584,7 @@ def open_M2000file(fname, take_every=1, dropdatapoints=1):
     mode = None
     metadata = {}
 
-    with open(fname, mode="r") as file:
+    with possibly_open_file(fname, mode="r") as file:
         file.readline()  # Skip the blank first line
         firstline = file.readline()[:-1]
         secondline = file.readline()[:-1]
@@ -624,7 +624,7 @@ def open_M2000file(fname, take_every=1, dropdatapoints=1):
 
 def _open_M2000file_standard(fname, dropdatapoints=1, metadata={}, skiplines=3):
     data = []
-    with open(fname, mode="r") as file:
+    with possibly_open_file(fname, mode="r") as file:
         for i in range(skiplines):
             file.readline()
 
@@ -727,7 +727,7 @@ def open_FilmSenseFile(fname):
 
         Metadata contained within the file is stored in DataSE.metadata.
     """
-    with open(fname, "r") as f:
+    with possibly_open_file(fname, "r") as f:
         header = f.readline()
         if header == "Film_Sense_Data\n":
             return _open_FilmSenseFile_standard(f)
