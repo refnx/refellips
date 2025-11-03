@@ -12,6 +12,7 @@ def plot_ellipsdata(
     xaxis="aoi",
     plot_labels=True,
     legend=True,
+    resAx=None
 ):
     """
     Plots delta and psi values as a function of wavelength or angle of incidence.
@@ -79,34 +80,53 @@ def plot_ellipsdata(
                 axt.plot(aois, deltas, color="b")
 
     elif xaxis == "wavelength":
-        unique_aois = np.unique(data.aoi)
+        # Doesn't work for VASE
         wavs = np.linspace(
             np.min(data.wavelength) - 50, np.max(data.wavelength) + 50
         )
         x = data.wavelength
 
         if model != None:
-            print(x)
-            for idx, wav in enumerate(np.unique(data.wavelength)):
-                wavelength, aoi, d_psi, d_delta = list(
-                    data.unique_wavelength_data()
-                )[idx]
+            wavelength_aois = np.c_[wavs, data.aoi[0]*np.ones_like(wavs)]
+            psi, delta = model(wavelength_aois)
+            ax.plot(wavs, psi, color="r")
+            axt.plot(wavs, delta, color="b")
+#             for idx, wav in enumerate(np.unique(data.wavelength)):
+#                 wavelength, aoi, d_psi, d_delta = list(
+#                     data.unique_wavelength_data()
+#                 )[idx]
 
-                psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
-                ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
-                axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
+#                 psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
+#                 ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
+#                 axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
 
-        xlab = "Wavelength (nm)"
+            xlab = "Wavelength (nm)"
 
-    p = ax.scatter(x, data.psi, color="r")
-    d = axt.scatter(x, data.delta, color="b")
+    # Plot data
+    p = ax.scatter(x, data.psi, color="r", alpha=0.5)
+    d = axt.scatter(x, data.delta, color="b", alpha=0.5)
 
-    ax.legend(handles=[p, d], labels=["Psi", "Delta"])
+    # ax.legend(handles=[p, d], labels=["Psi", "Delta"], loc='center right')
+    
+    if resAx != None:
+        assert objective != None, 'To plot residuals you must supply an objective'
+        res = objective.residuals()
+        numdp = int(len(res)/2)
+        psires = res[:numdp]
+        delres = res[numdp:]
+        resAx.scatter(x, psires, color='r')
+        resAx.scatter(x, delres, color='b')
+        resAx.text(0.95, 0.1, s=r'$\chi^2 = $' + f'{np.round(objective.chisqr(),3)}', transform=resAx.transAxes, ha='right', va='bottom')
+
+        
 
     if plot_labels:
-        ax.set(ylabel="Psi", xlabel=xlab)
-        axt.set(ylabel="Delta")
-
+        ax.set_ylabel("Psi", color='red')
+        ax.set_xlabel(xlab)
+        
+        axt.set_ylabel("Delta", color='blue')
+        if resAx != None:
+            resAx.set(ylabel='error')
 
 def plot_structure(
     ax,
@@ -157,6 +177,8 @@ def plot_structure(
         wavelengths = [658]
 
     if len(wavelengths) > 1:
+        if len(wavelengths) >8:
+            wavelengths = np.linspace(np.min(wavelengths), np.max(wavelengths), 6)
         colors = plt.cm.viridis(np.linspace(0, 1, len(wavelengths)))
         alpha = 0.5
     else:
