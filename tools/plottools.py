@@ -12,7 +12,7 @@ def plot_ellipsdata(
     xaxis="aoi",
     plot_labels=True,
     legend=True,
-    resax=None
+    resax=None,
 ):
     """
     Plots delta and psi values as a function of wavelength or angle of incidence.
@@ -52,15 +52,17 @@ def plot_ellipsdata(
 
     if objective is not None:
         assert (
-                data is None and model is None
+            data is None and model is None
         ), "If objective is supplied, model and data should not be passed"
         data = objective.data
         model = objective.model
     elif model is not None:
-        assert data is not None, "If you supply a model, you must also supply data"
+        assert (
+            data is not None
+        ), "If you supply a model, you must also supply data"
     else:
         assert (
-                data is not None
+            data is not None
         ), "must supply at least one of data, model or objective"
 
     assert (
@@ -90,19 +92,18 @@ def plot_ellipsdata(
         xlab = "Wavelength (nm)"
 
         if model is not None:
-            wavelength_aois = np.c_[wavs, data.aoi[0]*np.ones_like(wavs)]
+            wavelength_aois = np.c_[wavs, data.aoi[0] * np.ones_like(wavs)]
             psi, delta = model(wavelength_aois)
             ax.plot(wavs, psi, color="r")
             axt.plot(wavs, delta, color="b")
-#             for idx, wav in enumerate(np.unique(data.wavelength)):
-#                 wavelength, aoi, d_psi, d_delta = list(
-#                     data.unique_wavelength_data()
-#                 )[idx]
+    #             for idx, wav in enumerate(np.unique(data.wavelength)):
+    #                 wavelength, aoi, d_psi, d_delta = list(
+    #                     data.unique_wavelength_data()
+    #                 )[idx]
 
-#                 psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
-#                 ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
-#                 axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
-
+    #                 psi, delta = model(np.c_[np.ones_like(aoi) * wavelength, aoi])
+    #                 ax.plot(np.ones_like(psi) * wavelength, psi, color="r")
+    #                 axt.plot(np.ones_like(delta) * wavelength, delta, color="b")
 
     else:
         assert False, "xaxis must be 'aoi' or 'wavelength'"
@@ -112,27 +113,35 @@ def plot_ellipsdata(
     d = axt.scatter(x, data.delta, color="b", alpha=0.5)
 
     if legend:
-        ax.legend(handles=[p, d], labels=["Psi", "Delta"], loc='center right')
-    
+        ax.legend(handles=[p, d], labels=["Psi", "Delta"], loc="center right")
+
     if resax is not None:
-        assert objective is not None, 'To plot residuals you must supply an objective'
+        assert (
+            objective is not None
+        ), "To plot residuals you must supply an objective"
         res = objective.residuals()
-        numdp = int(len(res)/2)
+        numdp = int(len(res) / 2)
         psires = res[:numdp]
         delres = res[numdp:]
-        resAx.scatter(x, psires, color='r')
-        resAx.scatter(x, delres, color='b')
-        resAx.text(0.95, 0.1, s=r'$\chi^2 = $' + f'{np.round(objective.chisqr(),3)}', transform=resAx.transAxes, ha='right', va='bottom')
-
-        
+        resAx.scatter(x, psires, color="r")
+        resAx.scatter(x, delres, color="b")
+        resAx.text(
+            0.95,
+            0.1,
+            s=r"$\chi^2 = $" + f"{np.round(objective.chisqr(),3)}",
+            transform=resAx.transAxes,
+            ha="right",
+            va="bottom",
+        )
 
     if plot_labels:
-        ax.set_ylabel("Psi", color='red')
+        ax.set_ylabel("Psi", color="red")
         ax.set_xlabel(xlab)
-        
-        axt.set_ylabel("Delta", color='blue')
+
+        axt.set_ylabel("Delta", color="blue")
         if resAx is not None:
-            resAx.set(ylabel='error')
+            resAx.set(ylabel="error")
+
 
 def plot_structure(
     ax,
@@ -172,19 +181,21 @@ def plot_structure(
     """
     if objective is not None:
         assert (
-                structure is None
+            structure is None
         ), "you must supply either an objective or structure, not both"
         structure = objective.model.structure
         wavelengths = np.unique(objective.data.wavelength)
     else:
         assert (
-                structure is not None
+            structure is not None
         ), "you must supply either an objective or structure"
         wavelengths = [658]
 
     if len(wavelengths) > 1:
-        if len(wavelengths) >8:
-            wavelengths = np.linspace(np.min(wavelengths), np.max(wavelengths), 6)
+        if len(wavelengths) > 8:
+            wavelengths = np.linspace(
+                np.min(wavelengths), np.max(wavelengths), 6
+            )
         colors = plt.cm.viridis(np.linspace(0, 1, len(wavelengths)))
         alpha = 0.5
     else:
