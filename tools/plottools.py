@@ -123,13 +123,13 @@ def plot_ellipsdata(
         numdp = int(len(res) / 2)
         psires = res[:numdp]
         delres = res[numdp:]
-        resAx.scatter(x, psires, color="r")
-        resAx.scatter(x, delres, color="b")
-        resAx.text(
+        resax.scatter(x, psires, color="r")
+        resax.scatter(x, delres, color="b")
+        resax.text(
             0.95,
             0.1,
             s=r"$\chi^2 = $" + f"{np.round(objective.chisqr(),3)}",
-            transform=resAx.transAxes,
+            transform=resax.transAxes,
             ha="right",
             va="bottom",
         )
@@ -139,8 +139,8 @@ def plot_ellipsdata(
         ax.set_xlabel(xlab)
 
         axt.set_ylabel("Delta", color="blue")
-        if resAx is not None:
-            resAx.set(ylabel="error")
+        if resax is not None:
+            resax.set(ylabel="error")
 
 
 def plot_structure(
