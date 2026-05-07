@@ -14,7 +14,6 @@ from refnx.analysis import (
 
 from .structureSE import ScattererSE, nm_eV_conversion
 
-
 # list of material dispersion curves distributed with refellips
 _pth = os.path.dirname(os.path.abspath(__file__))
 _material_files = glob.glob(os.path.join(_pth, "materials/*.csv"))
