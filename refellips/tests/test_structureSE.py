@@ -22,7 +22,6 @@ from refellips import (
     load_material,
 )
 
-
 pth = Path(os.path.dirname(os.path.abspath(refellips.__file__)))
 
 
